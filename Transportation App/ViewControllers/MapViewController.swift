@@ -26,28 +26,19 @@ final class MapViewController: UIViewController, CLLocationManagerDelegate  {
     }
     
     private func setupLocationManager() {
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.requestWhenInUseAuthorization()
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.first else { return }
-        locationManager.stopUpdatingLocation()
-        
+       
+        let fixedLocation = CLLocationCoordinate2D(latitude: 55.9500, longitude: -3.1900)
         let region = MKCoordinateRegion(
-            center: location.coordinate,
+            center: fixedLocation,
             latitudinalMeters: 1000,
             longitudinalMeters: 1000
         )
         mapView.setRegion(region, animated: true)
-        mapView.showsUserLocation = true
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        if status == .authorizedWhenInUse || status == .authorizedAlways {
-            locationManager.startUpdatingLocation()
-        }
+        
+        let annotation = MKPointAnnotation()
+        annotation.coordinate = fixedLocation
+        annotation.title = "Current Location"
+        mapView.addAnnotation(annotation)
     }
 }
 

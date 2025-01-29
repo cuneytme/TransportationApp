@@ -36,5 +36,12 @@ final class SplashViewController: UIViewController {
             viewController.modalPresentationStyle = .fullScreen
             self?.present(viewController, animated: true)
         }
+        
+        viewModel.navigateToHome = { [weak self] user in
+            let homeVC = HomeViewController(user: user)
+            let navController = UINavigationController(rootViewController: homeVC)
+            navController.modalPresentationStyle = .fullScreen
+            self?.present(navController, animated: true)
+        }
     }
 } 

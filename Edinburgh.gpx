@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<gpx version="1.1" creator="Cuneyt Elbasti - Transportation App">
+    <wpt lat="55.9486" lon="-3.1999">
+        <name>Edinburgh Castle</name>
+        <desc>Historic fortress in the heart of Edinburgh</desc>
+    </wpt>
+    
+    <wpt lat="55.9533" lon="-3.1883">
+        <name>Calton Hill</name>
+        <desc>Historic hill with monuments and city views</desc>
+    </wpt>
+    
+    <wpt lat="55.9474" lon="-3.1907">
+        <name>Royal Mile</name>
+        <desc>Historic street in Old Town</desc>
+    </wpt>
+    
+    <wpt lat="55.9497" lon="-3.1914">
+        <name>Waverley Station</name>
+        <desc>Main railway station</desc>
+    </wpt>
+    
+    <trk>
+        <name>Edinburgh City Tour</name>
+        <trkseg>
+            <!-- Edinburgh Castle to Royal Mile -->
+            <trkpt lat="55.9486" lon="-3.1999"/>
+            <trkpt lat="55.9483" lon="-3.1975"/>
+            <trkpt lat="55.9474" lon="-3.1907"/>
+            
+            <!-- Royal Mile to Waverley Station -->
+            <trkpt lat="55.9474" lon="-3.1907"/>
+            <trkpt lat="55.9485" lon="-3.1910"/>
+            <trkpt lat="55.9497" lon="-3.1914"/>
+            
+            <!-- Waverley Station to Calton Hill -->
+            <trkpt lat="55.9497" lon="-3.1914"/>
+            <trkpt lat="55.9515" lon="-3.1899"/>
+            <trkpt lat="55.9533" lon="-3.1883"/>
+        </trkseg>
+    </trk>
+</gpx>
