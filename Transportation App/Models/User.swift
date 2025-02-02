@@ -1,4 +1,3 @@
-
 //
 //  User.swift
 //  Transportation App

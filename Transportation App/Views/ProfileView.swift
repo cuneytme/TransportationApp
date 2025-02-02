@@ -32,6 +32,22 @@ final class ProfileView: UIView {
         return label
     }()
     
+    let cardNoLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.font = .systemFont(ofSize: 16)
+        label.textColor = .gray
+        return label
+    }()
+    
+    let cardBalanceLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.font = .systemFont(ofSize: 16)
+        label.textColor = .gray
+        return label
+    }()
+    
     let logoutButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Log Out", for: .normal)
@@ -54,7 +70,7 @@ final class ProfileView: UIView {
         backgroundColor = .white
         
         addSubview(stackView)
-        [nameLabel, emailLabel, logoutButton].forEach { stackView.addArrangedSubview($0) }
+        [nameLabel, emailLabel, cardNoLabel, cardBalanceLabel, logoutButton].forEach { stackView.addArrangedSubview($0) }
         
         NSLayoutConstraint.activate([
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),

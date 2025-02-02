@@ -23,7 +23,7 @@ final class HomeViewModel {
             try Auth.auth().signOut()
             didLogout?()
         } catch {
-            print("Error: \(error.localizedDescription)")
+          
         }
     }
 }

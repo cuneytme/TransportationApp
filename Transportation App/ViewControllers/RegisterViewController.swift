@@ -21,7 +21,6 @@ final class RegisterViewController: UIViewController {
         setupUI()
         setupDelegates()
     }
-    
     private func setupUI() {
         title = "Register"
         navigationController?.navigationBar.tintColor = .black

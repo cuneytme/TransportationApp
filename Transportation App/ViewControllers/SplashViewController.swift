@@ -39,9 +39,13 @@ final class SplashViewController: UIViewController {
         
         viewModel.navigateToHome = { [weak self] user in
             let homeVC = HomeViewController(user: user)
-            let navController = UINavigationController(rootViewController: homeVC)
-            navController.modalPresentationStyle = .fullScreen
-            self?.present(navController, animated: true)
+            
+            if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate,
+               let window = sceneDelegate.window {
+                let navController = UINavigationController(rootViewController: homeVC)
+                window.rootViewController = navController
+                window.makeKeyAndVisible()
+            }
         }
     }
 } 

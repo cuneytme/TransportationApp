@@ -18,6 +18,38 @@ final class HomeView: UIView {
         return stack
     }()
     
+    let mapButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Show Map", for: .normal)
+        button.backgroundColor = .systemBlue
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 8
+        button.clipsToBounds = true
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    let stopsButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Show Stops", for: .normal)
+        button.backgroundColor = .systemGreen
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 8
+        button.clipsToBounds = true
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    let servicesButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Show Services", for: .normal)
+        button.backgroundColor = .systemIndigo
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 8
+        button.clipsToBounds = true
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
     
     private let logoImageView: UIImageView = {
         let imageView = UIImageView()
@@ -25,18 +57,6 @@ final class HomeView: UIView {
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
-    }()
-    
-    private let mapButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Map", for: .normal)
-        button.backgroundColor = .systemBlue
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 8
-        button.clipsToBounds = true
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-        
     }()
     
     override init(frame: CGRect) {
@@ -48,26 +68,25 @@ final class HomeView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-   
     private func setupUI() {
         backgroundColor = .white
         addSubview(stackView)
-        [logoImageView, mapButton].forEach { stackView.addArrangedSubview($0) }
+        [logoImageView, mapButton, stopsButton, servicesButton].forEach { stackView.addArrangedSubview($0) }
         
         NSLayoutConstraint.activate([
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             
-            mapButton.heightAnchor.constraint(equalToConstant: 50)
+            mapButton.heightAnchor.constraint(equalToConstant: 50),
+            stopsButton.heightAnchor.constraint(equalToConstant: 50),
+            servicesButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
     
     func mapButtonAction(_ target: Any?, action: Selector) {
         mapButton.addTarget(target, action: action, for: .touchUpInside)
     }
-    
-    
 }
 
     
