@@ -34,13 +34,14 @@ final class StopsViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "Stops"
+        title = "Duraklar"
         stopsView.tableView.delegate = self
         stopsView.tableView.dataSource = self
+        stopsView.searchBar.delegate = self
     }
     
     private func setupBindings() {
-        viewModel.$stops
+        viewModel.$filteredStops
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.stopsView.tableView.reloadData()
@@ -62,8 +63,8 @@ final class StopsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .compactMap { $0 }
             .sink { [weak self] error in
-                let alert = UIAlertController(title: "Error", message: error, preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                let alert = UIAlertController(title: "Hata", message: error, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Tamam", style: .default))
                 self?.present(alert, animated: true)
             }
             .store(in: &cancellables)
@@ -72,18 +73,28 @@ final class StopsViewController: UIViewController {
 
 extension StopsViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.stops.count
+        return viewModel.filteredStops.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "StopCell", for: indexPath)
-        let stop = viewModel.stops[indexPath.row]
+        let stop = viewModel.filteredStops[indexPath.row]
         
         var content = cell.defaultContentConfiguration()
         content.text = stop.name
-        content.secondaryText = "Location: \(stop.locality) • Services: \(stop.services!.joined(separator: ", "))"
+        content.secondaryText = "Konum: \(stop.locality) • Servisler: \(stop.services?.joined(separator: ", ") ?? "")"
         cell.contentConfiguration = content
         
         return cell
+    }
+}
+
+extension StopsViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        viewModel.filterStops(with: searchText)
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder()
     }
 } 
