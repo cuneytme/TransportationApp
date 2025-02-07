@@ -11,7 +11,7 @@ import UIKit
 final class ServicesView: UIView {
     let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
-        searchBar.placeholder = "Servis ara..."
+        searchBar.placeholder = "Search services"
         searchBar.searchBarStyle = .minimal
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         return searchBar

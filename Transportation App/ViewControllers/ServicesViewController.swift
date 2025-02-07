@@ -2,7 +2,7 @@
 //  ServicesViewController.swift
 //  Transportation App
 //
-//  Created by Cüneyt Elbastı on 29.01.2025.
+//  Created by Cüneyt Elbastı on 07.02.2025.
 //
 
 import UIKit
@@ -95,8 +95,8 @@ extension ServicesViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let serviceNumber = viewModel.filteredServices[indexPath.row]
-        let detailVC = ServiceDetailViewController(serviceNumber: serviceNumber)
-        navigationController?.pushViewController(detailVC, animated: true)
+        let serviceInfoVC = ServiceInfoViewController(serviceNumber: serviceNumber)
+        navigationController?.pushViewController(serviceInfoVC, animated: true)
     }
 }
 

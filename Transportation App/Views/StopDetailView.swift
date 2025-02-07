@@ -1,24 +1,18 @@
 //
-//  StopsView.swift
+//  StopDetailView.swift
 //  Transportation App
 //
-//  Created by Cüneyt Elbastı on 29.01.2025.
+//  Created by Cüneyt Elbastı on 07.02.2025.
 //
+
 
 import UIKit
 
-final class StopsView: UIView {
-    let searchBar: UISearchBar = {
-        let searchBar = UISearchBar()
-        searchBar.placeholder = "Search stops..."
-        searchBar.searchBarStyle = .minimal
-        searchBar.translatesAutoresizingMaskIntoConstraints = false
-        return searchBar
-    }()
-    
+
+final class StopDetailView: UIView {
     let tableView: UITableView = {
         let table = UITableView()
-        table.register(UITableViewCell.self, forCellReuseIdentifier: "StopCell")
+        table.register(UITableViewCell.self, forCellReuseIdentifier: "BusTimeCell")
         table.translatesAutoresizingMaskIntoConstraints = false
         return table
     }()
@@ -41,16 +35,11 @@ final class StopsView: UIView {
     
     private func setupUI() {
         backgroundColor = .white
-        addSubview(searchBar)
         addSubview(tableView)
         addSubview(activityIndicator)
         
         NSLayoutConstraint.activate([
-            searchBar.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
-            searchBar.leadingAnchor.constraint(equalTo: leadingAnchor),
-            searchBar.trailingAnchor.constraint(equalTo: trailingAnchor),
-            
-            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            tableView.topAnchor.constraint(equalTo: topAnchor),
             tableView.leadingAnchor.constraint(equalTo: leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: bottomAnchor),

@@ -61,4 +61,4 @@ final class ServiceDetailView: UIView {
             activityIndicator.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
     }
-} 
+}

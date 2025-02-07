@@ -34,7 +34,7 @@ final class StopsViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "Duraklar"
+        title = "Stops"
         stopsView.tableView.delegate = self
         stopsView.tableView.dataSource = self
         stopsView.searchBar.delegate = self
@@ -63,8 +63,8 @@ final class StopsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .compactMap { $0 }
             .sink { [weak self] error in
-                let alert = UIAlertController(title: "Hata", message: error, preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "Tamam", style: .default))
+                let alert = UIAlertController(title: "Error", message: error, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
                 self?.present(alert, animated: true)
             }
             .store(in: &cancellables)
@@ -82,10 +82,17 @@ extension StopsViewController: UITableViewDelegate, UITableViewDataSource {
         
         var content = cell.defaultContentConfiguration()
         content.text = stop.name
-        content.secondaryText = "Konum: \(stop.locality) • Servisler: \(stop.services?.joined(separator: ", ") ?? "")"
+        content.secondaryText = "Location: \(stop.locality) • Services: \(stop.services?.joined(separator: ", ") ?? "")"
         cell.contentConfiguration = content
         
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let stop = viewModel.filteredStops[indexPath.row]
+        let stopDetailVC = StopDetailViewController(stop: stop)
+        navigationController?.pushViewController(stopDetailVC, animated: true)
     }
 }
 

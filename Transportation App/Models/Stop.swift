@@ -18,6 +18,7 @@ struct Stop: Codable {
     let serviceType: String?
     let destinations: [String]?
     let services: [String]?
+    let sequence: Int?
     
     enum CodingKeys: String, CodingKey {
         case stopId = "stop_id"
@@ -32,6 +33,7 @@ struct Stop: Codable {
         case serviceType = "service_type"
         case destinations
         case services
+        case sequence
     }
 }
 
