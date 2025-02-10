@@ -42,10 +42,8 @@ extension TimetableData {
             return "Saturday"
         case 6:
             return "Sunday"
-        case 0:
-            return "Everyday"
         default:
-            return "Unknown"
+           return "Weekday"
         }
     }
 } 

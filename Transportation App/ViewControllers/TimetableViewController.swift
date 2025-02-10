@@ -31,6 +31,7 @@ final class TimetableViewController: UIViewController {
         super.viewDidLoad()
         setupBindings()
         setupTableView()
+        setupSegmentedControl()
         
         Task {
             await viewModel.fetchTimetables()
@@ -40,6 +41,18 @@ final class TimetableViewController: UIViewController {
     private func setupTableView() {
         timetableView.tableView.delegate = self
         timetableView.tableView.dataSource = self
+    }
+    
+    private func setupSegmentedControl() {
+        timetableView.segmentedControl.addTarget(
+            self,
+            action: #selector(segmentedControlValueChanged),
+            for: .valueChanged
+        )
+    }
+    
+    @objc private func segmentedControlValueChanged(_ sender: UISegmentedControl) {
+        viewModel.updateSelectedDayType(sender.selectedSegmentIndex)
     }
     
     private func setupBindings() {
@@ -62,7 +75,7 @@ final class TimetableViewController: UIViewController {
             }
             .store(in: &cancellables)
         
-        viewModel.$departures
+        viewModel.$filteredDepartures
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.timetableView.tableView.reloadData()
@@ -81,16 +94,15 @@ final class TimetableViewController: UIViewController {
 
 extension TimetableViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.departures.count
+        return viewModel.filteredDepartures.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "TimetableCell", for: indexPath)
-        let departure = viewModel.departures[indexPath.row]
+        let departure = viewModel.filteredDepartures[indexPath.row]
         
         var content = cell.defaultContentConfiguration()
         content.text = "\(departure.time) - \(departure.destination)"
-        content.secondaryText = departure.formattedDayText
         
         cell.contentConfiguration = content
         return cell

@@ -51,6 +51,7 @@ final class HomeView: UIView {
         return button
     }()
     
+    
     private let logoImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(named: "asis_logo")

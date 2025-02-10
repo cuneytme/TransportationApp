@@ -8,6 +8,14 @@
 import UIKit
 
 final class TimetableView: UIView {
+    let segmentedControl: UISegmentedControl = {
+        let items = ["Weekday", "Saturday", "Sunday"]
+        let control = UISegmentedControl(items: items)
+        control.selectedSegmentIndex = 0
+        control.translatesAutoresizingMaskIntoConstraints = false
+        return control
+    }()
+    
     let tableView: UITableView = {
         let table = UITableView()
         table.register(UITableViewCell.self, forCellReuseIdentifier: "TimetableCell")
@@ -33,11 +41,16 @@ final class TimetableView: UIView {
     
     private func setupUI() {
         backgroundColor = .white
+        addSubview(segmentedControl)
         addSubview(tableView)
         addSubview(activityIndicator)
         
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+            segmentedControl.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 8),
+            segmentedControl.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            segmentedControl.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            
+            tableView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 8),
             tableView.leadingAnchor.constraint(equalTo: leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: bottomAnchor),
