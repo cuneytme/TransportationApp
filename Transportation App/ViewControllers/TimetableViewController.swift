@@ -109,6 +109,6 @@ extension TimetableViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return "Service No: "
+        return "Service No:"
     }
 } 

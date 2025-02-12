@@ -10,7 +10,7 @@ final class HomeViewController: UIViewController {
     
     private let user: User
     private let homeView = HomeView()
-    private var viewModel: HomeViewModel
+    private let viewModel: HomeViewModel
     
     init(user: User) {
         self.user = user
@@ -22,61 +22,73 @@ final class HomeViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    override func loadView() {
         view = homeView
-        setupNavigationBar()
-        setupActions()
     }
     
-    private func setupNavigationBar() {
-        title = "Main Screen"
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        setupActions()
+        setupBindings()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+        navigationController?.navigationBar.prefersLargeTitles = true
+    }
+    
+    private func setupUI() {
         navigationController?.navigationBar.isHidden = false
         
         let profileButton = UIBarButtonItem(
             image: UIImage(systemName: "person.circle"),
             style: .plain,
             target: self,
-            action: #selector(showProfile)
+            action: #selector(profileButtonTapped)
         )
         navigationItem.rightBarButtonItem = profileButton
     }
     
     private func setupActions() {
-        homeView.mapButton.addTarget(self, 
-                                   action: #selector(mapButtonTapped), 
-                                   for: .touchUpInside)
-        homeView.stopsButton.addTarget(self,
-                                     action: #selector(stopsButtonTapped),
-                                     for: .touchUpInside)
-        homeView.servicesButton.addTarget(self,
-                                        action: #selector(servicesButtonTapped),
-                                        for: .touchUpInside)
+        
+        homeView.mapButtonAction(self, action: #selector(mapButtonTapped))
+        homeView.stopsButtonAction(self, action: #selector(stopsButtonTapped))
+        homeView.servicesButtonAction(self, action: #selector(servicesButtonTapped))
     }
     
-    @objc private func showProfile() {
+    private func setupBindings() {
+        viewModel.didTapMap = { [weak self] in
+            let mapVC = MapViewController(viewModel: MapViewModel())
+            self?.navigationController?.pushViewController(mapVC, animated: true)
+        }
+        
+        viewModel.didTapStops = { [weak self] in
+            let stopsVC = StopsViewController()
+            self?.navigationController?.pushViewController(stopsVC, animated: true)
+        }
+        
+        viewModel.didTapServices = { [weak self] in
+            let servicesVC = ServicesViewController()
+            self?.navigationController?.pushViewController(servicesVC, animated: true)
+        }
+    }
+    
+    @objc private func profileButtonTapped() {
         let profileVC = ProfileViewController(user: user)
-        self.navigationController?.pushViewController(profileVC, animated: true)
+        navigationController?.pushViewController(profileVC, animated: true)
     }
     
     @objc private func mapButtonTapped() {
-        let viewModel = MapViewModel()
-        let mapVC = MapViewController(viewModel: viewModel)
-        self.navigationController?.pushViewController(mapVC, animated: true)
+        viewModel.didTapMap?()
     }
     
     @objc private func stopsButtonTapped() {
-        let stopsVC = StopsViewController()
-        navigationController?.pushViewController(stopsVC, animated: true)
+        viewModel.didTapStops?()
     }
     
     @objc private func servicesButtonTapped() {
-        let servicesVC = ServicesViewController()
-        navigationController?.pushViewController(servicesVC, animated: true)
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        navigationController?.navigationBar.isHidden = false
+        viewModel.didTapServices?()
     }
 }

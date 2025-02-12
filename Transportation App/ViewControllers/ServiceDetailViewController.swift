@@ -56,7 +56,7 @@ final class ServiceDetailViewController: UIViewController {
             }
             .store(in: &cancellables)
         
-        viewModel.$vehicles
+        viewModel.$vehicleAnnotations
             .receive(on: DispatchQueue.main)
             .sink { [weak self] vehicles in
                 self?.updateVehicleAnnotations(vehicles)
@@ -146,14 +146,14 @@ final class ServiceDetailViewController: UIViewController {
         return MKCoordinateRegion(center: center, span: span)
     }
     
-    private func updateVehicleAnnotations(_ vehicles: [Vehicle]) {
+    private func updateVehicleAnnotations(_ vehicles: [ServiceDetailViewModel.VehicleAnnotationViewModel]) {
         let existingVehicleAnnotations = serviceDetailView.mapView.annotations.filter { $0 is VehicleAnnotation }
         serviceDetailView.mapView.removeAnnotations(existingVehicleAnnotations)
         
         let annotations = vehicles.map { vehicle -> VehicleAnnotation in
-            let annotation = VehicleAnnotation(vehicle: vehicle)
-            annotation.title = "Bus \(vehicle.vehicleId)"
-            annotation.subtitle = vehicle.serviceName ?? "Unknown Service"
+            let annotation = VehicleAnnotation(coordinate: vehicle.coordinate)
+            annotation.title = vehicle.title
+            annotation.subtitle = vehicle.subtitle
             return annotation
         }
         

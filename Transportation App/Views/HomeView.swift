@@ -71,11 +71,18 @@ final class HomeView: UIView {
     
     private func setupUI() {
         backgroundColor = .white
+        
+        addSubview(logoImageView)
         addSubview(stackView)
-        [logoImageView, mapButton, stopsButton, servicesButton].forEach { stackView.addArrangedSubview($0) }
+        [mapButton, stopsButton, servicesButton].forEach { stackView.addArrangedSubview($0) }
         
         NSLayoutConstraint.activate([
-            stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            logoImageView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 20),
+            logoImageView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            logoImageView.widthAnchor.constraint(equalToConstant: 200),
+            logoImageView.heightAnchor.constraint(equalToConstant: 200),
+            
+            stackView.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 40),
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             
@@ -86,7 +93,18 @@ final class HomeView: UIView {
     }
     
     func mapButtonAction(_ target: Any?, action: Selector) {
+        mapButton.removeTarget(nil, action: nil, for: .allEvents)
         mapButton.addTarget(target, action: action, for: .touchUpInside)
+    }
+    
+    func stopsButtonAction(_ target: Any?, action: Selector) {
+        stopsButton.removeTarget(nil, action: nil, for: .allEvents)
+        stopsButton.addTarget(target, action: action, for: .touchUpInside)
+    }
+    
+    func servicesButtonAction(_ target: Any?, action: Selector) {
+        servicesButton.removeTarget(nil, action: nil, for: .allEvents)
+        servicesButton.addTarget(target, action: action, for: .touchUpInside)
     }
 }
 

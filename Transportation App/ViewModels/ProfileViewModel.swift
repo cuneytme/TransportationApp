@@ -30,7 +30,7 @@ final class ProfileViewModel {
             try Auth.auth().signOut()
             didLogout?()
         } catch {
-         
+           //
         }
     }
 } 

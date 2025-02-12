@@ -6,13 +6,19 @@
 //
 
 struct User {
-    let uid: String
+    let id: String
     let email: String
     let fullName: String
-   
-    init(uid: String, dictionary: [String: Any]) {
-        self.uid = uid
-        self.email = dictionary["email"] as? String ?? ""
-        self.fullName = dictionary["fullName"] as? String ?? ""
+    
+    init(id: String, email: String, fullName: String) {
+        self.id = id
+        self.email = email
+        self.fullName = fullName
+    }
+    
+    init(data: [String: Any]) {
+        self.id = data["userId"] as? String ?? ""
+        self.email = data["email"] as? String ?? ""
+        self.fullName = data["fullName"] as? String ?? ""
     }
 } 

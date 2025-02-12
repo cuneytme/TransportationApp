@@ -6,59 +6,127 @@
 //
 
 import FirebaseAuth
+import FirebaseFirestore
 
 final class AuthViewModel {
     var didSignIn: ((User) -> Void)?
     var didError: ((String) -> Void)?
+    var didLogin: ((User) -> Void)?
+    var didFailLogin: ((String) -> Void)?
     
     private let auth = Auth.auth()
+    private let db = Firestore.firestore()
     
-    func signIn(email: String, password: String) {
-        didError?("Loading...")
-        
-        auth.signIn(withEmail: email, password: password) { [weak self] result, error in
-            if let error = error {
-                self?.didError?(self?.handleAuthError(error) ?? error.localizedDescription)
-                return
-            }
-            
-            guard let firebaseUser = result?.user else {
-                self?.didError?("User could not be found")
-                return
-            }
-            
-            let user = User(uid: firebaseUser.uid, 
-                          dictionary: [
-                            "email": firebaseUser.email ?? "",
-                            "fullName": firebaseUser.displayName ?? ""
-                          ])
-            
-            self?.didSignIn?(user)
-        }
-    }
-    
-    func signUp(email: String, password: String, fullName: String, completion: @escaping (Result<Void, Error>) -> Void) {
+    func signUp(email: String, password: String, fullName: String, completion: @escaping (Result<User, Error>) -> Void) {
         auth.createUser(withEmail: email, password: password) { [weak self] result, error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
             
-            guard let user = result?.user else {
-                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User could not be created"])))
+            guard let firebaseUser = result?.user else {
+                let error = NSError(domain: "", code: -1, 
+                                  userInfo: [NSLocalizedDescriptionKey: "User creation failed"])
+                completion(.failure(error))
                 return
             }
             
-            let changeRequest = user.createProfileChangeRequest()
-            changeRequest.displayName = fullName
+            let userData: [String: Any] = [
+                "userId": firebaseUser.uid,
+                "email": email,
+                "fullName": fullName,
+                "createdAt": FieldValue.serverTimestamp()
+            ]
             
-            changeRequest.commitChanges { error in
+            self?.db.collection("users").document(firebaseUser.uid)
+                .setData(userData, merge: true) { error in
+                    if let error = error {
+                        let user = User(id: firebaseUser.uid,
+                                      email: email,
+                                      fullName: fullName)
+                        completion(.success(user))
+                        return
+                    }
+                    
+                    let user = User(id: firebaseUser.uid,
+                                  email: email,
+                                  fullName: fullName)
+                    completion(.success(user))
+            }
+        }
+    }
+    
+    func signIn(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
+     
+        
+        auth.signIn(withEmail: email, password: password) { [weak self] result, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let firebaseUser = result?.user else {
+                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"])))
+                return
+            }
+            
+            
+            self?.db.collection("users").document(firebaseUser.uid).getDocument { snapshot, error in
                 if let error = error {
-                    completion(.failure(error))
+                    
+                    let basicUser = User(id: firebaseUser.uid,
+                                      email: email,
+                                      fullName: "")
+                    completion(.success(basicUser))
                     return
                 }
-                completion(.success(()))
+                
+                if let data = snapshot?.data() {
+                    let user = User(id: firebaseUser.uid,
+                                  email: data["email"] as? String ?? email,
+                                  fullName: data["fullName"] as? String ?? "")
+                    completion(.success(user))
+                } else {
+                  
+                    let userData: [String: Any] = [
+                        "userId": firebaseUser.uid,
+                        "email": email,
+                        "fullName": "",
+                        "createdAt": FieldValue.serverTimestamp()
+                    ]
+                    
+                    self?.db.collection("users").document(firebaseUser.uid).setData(userData) { error in
+                        if let error = error {
+                        }
+                        
+                        let user = User(id: firebaseUser.uid,
+                                      email: email,
+                                      fullName: "")
+                        completion(.success(user))
+                    }
+                }
             }
+        }
+    }
+    
+    func fetchUserData(userId: String, completion: @escaping (Result<User, Error>) -> Void) {
+        
+        db.collection("users").document(userId).getDocument { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let data = snapshot?.data() else {
+                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User data not found"])))
+                return
+            }
+            
+            
+            let user = User(id: userId,
+                          email: data["email"] as? String ?? "",
+                          fullName: data["fullName"] as? String ?? "")
+            completion(.success(user))
         }
     }
     
@@ -77,4 +145,45 @@ final class AuthViewModel {
              return "Not sure what went wrong: \(error.localizedDescription)"
          }
      }
+    
+    func retryUserDataSave(user: User, completion: @escaping (Error?) -> Void) {
+        let userData: [String: Any] = [
+            "userId": user.id,
+            "email": user.email,
+            "fullName": user.fullName,
+            "createdAt": FieldValue.serverTimestamp()
+        ]
+        
+        db.collection("users").document(user.id)
+            .setData(userData, merge: true) { error in
+                if let error = error {
+                    completion(error)
+                    return
+                }
+                completion(nil)
+        }
+    }
+    
+    func login(email: String, password: String) {
+        Auth.auth().signIn(withEmail: email, password: password) { [weak self] result, error in
+            if let error = error {
+                self?.didFailLogin?(error.localizedDescription)
+                return
+            }
+            
+            guard let userId = result?.user.uid else {
+                self?.didFailLogin?("User ID not found")
+                return
+            }
+            
+            self?.fetchUserData(userId: userId) { result in
+                switch result {
+                case .success(let user):
+                    self?.didLogin?(user)
+                case .failure(let error):
+                    self?.didFailLogin?(error.localizedDescription)
+                }
+            }
+        }
+    }
 }

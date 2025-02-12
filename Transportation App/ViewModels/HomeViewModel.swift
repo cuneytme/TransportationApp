@@ -13,9 +13,16 @@ final class HomeViewModel {
     private let user: User
     var didLogout: (() -> Void)?
     
+    var didTapMap: (() -> Void)?
+    var didTapStops: (() -> Void)?
+    var didTapServices: (() -> Void)?
+    
     init(user: User) {
         self.user = user
-        
+    }
+    
+    var userName: String {
+        return user.fullName
     }
     
     func logout() {
@@ -23,7 +30,7 @@ final class HomeViewModel {
             try Auth.auth().signOut()
             didLogout?()
         } catch {
-          
+            //
         }
     }
 }

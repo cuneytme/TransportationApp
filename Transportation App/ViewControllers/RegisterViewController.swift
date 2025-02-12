@@ -42,12 +42,12 @@ final class RegisterViewController: UIViewController {
               !password.isEmpty,
               let fullName = registerView.fullNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               !fullName.isEmpty else {
-            showAlert(title: "Error", message: "Fill all fields, please")
+            showAlert(title: "Error", message: "Please fill in all fields")
             return
         }
         
         if !isValidEmail(email) {
-            showAlert(title: "Error", message: "Email is not valid")
+            showAlert(title: "Error", message: "Please enter a valid email")
             return
         }
         
@@ -57,7 +57,7 @@ final class RegisterViewController: UIViewController {
         }
         
         view.isUserInteractionEnabled = false
-        registerView.registerButton.setTitle("Registering", for: .normal)
+        registerView.registerButton.setTitle("Registering...", for: .normal)
         
         viewModel.signUp(email: email, password: password, fullName: fullName) { [weak self] result in
             DispatchQueue.main.async {
@@ -65,9 +65,19 @@ final class RegisterViewController: UIViewController {
                 self?.registerView.registerButton.setTitle("Sign Up", for: .normal)
                 
                 switch result {
-                case .success:
-                    self?.showAlert(title: "Success", message: "Registration is successful") {
-                        self?.dismiss(animated: true)
+                case .success(let user):
+                    self?.viewModel.retryUserDataSave(user: user) { error in
+                        if let error = error {
+                            self?.showAlert(title: "Warning", 
+                                          message: "Account created but some data couldn't be saved. Please try logging out and back in.") {
+                                self?.navigateToProfile(with: user)
+                            }
+                        } else {
+                            self?.showAlert(title: "Success", 
+                                          message: "Registration successful!") {
+                                self?.navigateToProfile(with: user)
+                            }
+                        }
                     }
                 case .failure(let error):
                     let errorMessage = self?.handleFirebaseError(error) ?? error.localizedDescription
@@ -103,10 +113,35 @@ final class RegisterViewController: UIViewController {
         let alert = UIAlertController(title: title,
                                      message: message,
                                      preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Tamam", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
             completion?()
         })
         present(alert, animated: true)
+    }
+    
+    private func navigateToProfile(with user: User) {
+        let homeVC = HomeViewController(user: user)
+        
+        let profileVC = ProfileViewController(user: user)
+        
+        let navigationController = UINavigationController(rootViewController: homeVC)
+        navigationController.modalPresentationStyle = .fullScreen
+        navigationController.pushViewController(profileVC, animated: false)
+        
+        UIApplication.shared.windows.first?.rootViewController = navigationController
+        UIApplication.shared.windows.first?.makeKeyAndVisible()
+    }
+    
+    @objc private func handleBack() {
+        dismiss(animated: true)
+    }
+    
+    @objc private func handleHome() {
+        if let navigationController = self.navigationController {
+            navigationController.popToRootViewController(animated: true)
+        } else {
+            dismiss(animated: true)
+        }
     }
 }
 

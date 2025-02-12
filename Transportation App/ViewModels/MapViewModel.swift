@@ -8,28 +8,47 @@
 import Foundation
 import MapKit
 
-final class MapViewModel {
-    private let service = TransportService()
+final class MapViewModel: NSObject {
+    private let locationManager: CLLocationManager
+    private let service: TransportServiceProtocol
+    private let maximumDistance: Double = 1000
     
-    @Published var stops: [Stop] = []
-    @Published var vehicles: [Vehicle] = []
-    @Published var error: String?
+    @Published private(set) var stops: [Stop] = []
+    @Published private(set) var error: String?
+    @Published private(set) var userLocation: CLLocationCoordinate2D
+    @Published private(set) var isUpdatingLocation: Bool = false
+    @Published private(set) var shouldUpdateUserAnnotation: Bool = false
+    
+    init(service: TransportServiceProtocol = TransportService(),
+         locationManager: CLLocationManager = CLLocationManager()) {
+        self.service = service
+        self.locationManager = locationManager
+        self.userLocation = CLLocationCoordinate2D(latitude: 55.9533, longitude: -3.1883)
+        super.init()
+        self.shouldUpdateUserAnnotation = true
+    }
     
     func fetchStopsAndVehicles() async {
         do {
-            async let stopsResult = service.fetchStops()
-            async let vehiclesResult = service.fetchVehicles()
-            
-            let (stopsResponse, fetchedVehicles) = try await (stopsResult, vehiclesResult)
+            let stops = try await service.fetchStops()
             
             await MainActor.run {
-                self.stops = stopsResponse.stops
-                self.vehicles = fetchedVehicles
+                self.stops = self.filterNearbyStops(stops.stops)
             }
         } catch {
             await MainActor.run {
                 self.error = error.localizedDescription
             }
+        }
+    }
+    
+    private func filterNearbyStops(_ stops: [Stop]) -> [Stop] {
+        let userLocationObject = CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude)
+        
+        return stops.filter { stop in
+            let stopLocation = CLLocation(latitude: stop.latitude, longitude: stop.longitude)
+            let distance = userLocationObject.distance(from: stopLocation)
+            return distance <= maximumDistance
         }
     }
     
@@ -40,5 +59,18 @@ final class MapViewModel {
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
             }
         }
+    }
+    
+    func moveToUserLocation() {
+        isUpdatingLocation = true
+        shouldUpdateUserAnnotation = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.isUpdatingLocation = false
+        }
+    }
+    
+    func resetUserAnnotationFlag() {
+        shouldUpdateUserAnnotation = false
     }
 } 

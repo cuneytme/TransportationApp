@@ -6,11 +6,11 @@
 //
 
 import UIKit
-
+import FirebaseAuth
 
 final class ProfileViewController: UIViewController {
     private let profileView = ProfileView()
-    private let viewModel: ProfileViewModel
+    private var viewModel: ProfileViewModel
     
     init(user: User) {
         self.viewModel = ProfileViewModel(user: user)
@@ -25,7 +25,27 @@ final class ProfileViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupBindings()
+        setupNavigationBar()
         updateUI()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if let userId = Auth.auth().currentUser?.uid {
+            let authViewModel = AuthViewModel()
+            authViewModel.fetchUserData(userId: userId) { [weak self] result in
+                switch result {
+                case .success(let user):
+                    DispatchQueue.main.async {
+                        self?.viewModel = ProfileViewModel(user: user)
+                        self?.updateUI()
+                    }
+                case .failure(let error):
+                    print("Error refreshing user data: \(error.localizedDescription)")
+                }
+            }
+        }
     }
     
     private func setupUI() {
@@ -38,12 +58,33 @@ final class ProfileViewController: UIViewController {
                                          action: #selector(handleLogout), 
                                          for: .touchUpInside)
         
+        profileView.registerCardButton.addTarget(self,
+                                               action: #selector(handleRegisterCard),
+                                               for: .touchUpInside)
+        
         viewModel.didLogout = { [weak self] in
             let loginVC = LoginViewController(viewModel: AuthViewModel())
             loginVC.modalPresentationStyle = .fullScreen
-          
             UIApplication.shared.windows.first?.rootViewController = loginVC
             UIApplication.shared.windows.first?.makeKeyAndVisible()
+        }
+    }
+    
+    private func setupNavigationBar() {
+        title = "Profile"
+        
+        if navigationItem.leftBarButtonItem == nil {
+            navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Back",
+                                                            style: .plain,
+                                                            target: self,
+                                                            action: #selector(handleBack))
+        }
+        
+        if navigationItem.rightBarButtonItem == nil {
+            navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Home",
+                                                             style: .plain,
+                                                             target: self,
+                                                             action: #selector(handleHome))
         }
     }
     
@@ -54,5 +95,27 @@ final class ProfileViewController: UIViewController {
     
     @objc private func handleLogout() {
         viewModel.logout()
+    }
+    
+    @objc private func handleRegisterCard() {
+        
+        
+        // NFC READING WILL BE IMPLEMENTED HERE
+        
+       
+    }
+    
+    @objc private func handleBack() {
+        if let navigation = navigationController {
+            navigation.popViewController(animated: true)
+        } else {
+            dismiss(animated: true)
+        }
+    }
+    
+    @objc private func handleHome() {
+        if let navigationController = self.navigationController {
+            navigationController.popToRootViewController(animated: true)
+        }
     }
 } 

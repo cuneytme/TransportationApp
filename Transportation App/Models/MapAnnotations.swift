@@ -19,11 +19,14 @@ class StopAnnotation: MKPointAnnotation {
 }
 
 class VehicleAnnotation: MKPointAnnotation {
-    let vehicle: Vehicle
-    
-    init(vehicle: Vehicle) {
-        self.vehicle = vehicle
+    init(coordinate: CLLocationCoordinate2D) {
         super.init()
-        self.coordinate = CLLocationCoordinate2D(latitude: vehicle.latitude, longitude: vehicle.longitude)
+        self.coordinate = coordinate
+    }
+}
+
+class UserLocationAnnotation: MKPointAnnotation {
+    override init() {
+        super.init()
     }
 } 

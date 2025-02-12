@@ -21,6 +21,7 @@ final class ProfileView: UIView {
         let label = UILabel()
         label.textAlignment = .center
         label.font = .systemFont(ofSize: 24, weight: .bold)
+        label.textColor = .black
         return label
     }()
     
@@ -57,6 +58,15 @@ final class ProfileView: UIView {
         return button
     }()
     
+    let registerCardButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Register Your Card", for: .normal)
+        button.backgroundColor = .systemBlue
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 8
+        return button
+    }()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -70,12 +80,13 @@ final class ProfileView: UIView {
         backgroundColor = .white
         
         addSubview(stackView)
-        [nameLabel, emailLabel, cardNoLabel, cardBalanceLabel, logoutButton].forEach { stackView.addArrangedSubview($0) }
+        [nameLabel, emailLabel, registerCardButton, logoutButton].forEach { stackView.addArrangedSubview($0) }
         
         NSLayoutConstraint.activate([
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            registerCardButton.heightAnchor.constraint(equalToConstant: 50),
             logoutButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }

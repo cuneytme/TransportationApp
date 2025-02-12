@@ -11,7 +11,7 @@ import CoreLocation
 import Combine
 
 final class MapViewController: UIViewController {
-    private let mapView = MKMapView()
+    private let mapView = MapView()
     private let viewModel: MapViewModel
     private var cancellables = Set<AnyCancellable>()
     
@@ -29,6 +29,7 @@ final class MapViewController: UIViewController {
         setupUI()
         setupBindings()
         viewModel.startLiveUpdates()
+        mapView.mapView.delegate = self
     }
     
     private func setupUI() {
@@ -40,7 +41,9 @@ final class MapViewController: UIViewController {
         let region = MKCoordinateRegion(center: edinburghCenter,
                                       latitudinalMeters: 5000,
                                       longitudinalMeters: 5000)
-        mapView.setRegion(region, animated: true)
+        mapView.mapView.setRegion(region, animated: true)
+        
+        mapView.locationButton.addTarget(self, action: #selector(locationButtonTapped), for: .touchUpInside)
     }
     
     private func setupBindings() {
@@ -50,52 +53,55 @@ final class MapViewController: UIViewController {
             }
             .store(in: &cancellables)
         
-        viewModel.$vehicles
-            .sink { [weak self] vehicles in
-                self?.updateVehicleAnnotations(vehicles)
-            }
-            .store(in: &cancellables)
-        
         viewModel.$error
             .compactMap { error in error }
             .sink { [weak self] error in
                 self?.showError(error)
             }
             .store(in: &cancellables)
+        
+        viewModel.$userLocation
+            .sink { [weak self] location in
+                let region = MKCoordinateRegion(center: location,
+                                              latitudinalMeters: 1000,
+                                              longitudinalMeters: 1000)
+                self?.mapView.mapView.setRegion(region, animated: true)
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$isUpdatingLocation
+            .sink { [weak self] isUpdating in
+                self?.mapView.locationButton.isEnabled = !isUpdating
+                self?.mapView.locationButton.tintColor = isUpdating ? .gray : .systemBlue
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$shouldUpdateUserAnnotation
+            .filter { $0 }
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.updateUserLocation(self.viewModel.userLocation)
+                self.viewModel.resetUserAnnotationFlag()
+            }
+            .store(in: &cancellables)
     }
     
     private func updateStopAnnotations(_ stops: [Stop]) {
-     
-        let existingStopAnnotations = mapView.annotations.filter { $0 is StopAnnotation }
-        mapView.removeAnnotations(existingStopAnnotations)
+        let existingStopAnnotations = mapView.mapView.annotations.filter { $0 is StopAnnotation }
+        mapView.mapView.removeAnnotations(existingStopAnnotations)
         
         let annotations = stops.map { stop in
             let annotation = StopAnnotation(stop: stop)
             annotation.coordinate = CLLocationCoordinate2D(latitude: stop.latitude,
                                                          longitude: stop.longitude)
             annotation.title = stop.name
-            annotation.subtitle = "Stop ID: \(stop.stopId)"
             return annotation
         }
         
-        mapView.addAnnotations(annotations)
-    }
-    
-    private func updateVehicleAnnotations(_ vehicles: [Vehicle]) {
-  
-        let existingVehicleAnnotations = mapView.annotations.filter { $0 is VehicleAnnotation }
-        mapView.removeAnnotations(existingVehicleAnnotations)
-        
-        let annotations = vehicles.map { vehicle in
-            let annotation = VehicleAnnotation(vehicle: vehicle)
-            annotation.coordinate = CLLocationCoordinate2D(latitude: vehicle.latitude,
-                                                         longitude: vehicle.longitude)
-            annotation.title = "Bus \(vehicle.serviceName)"
-            annotation.subtitle = "To: \(vehicle.destination)"
-            return annotation
+        mapView.mapView.addAnnotations(annotations)
+        if existingStopAnnotations.isEmpty {
+            mapView.mapView.showAnnotations(mapView.mapView.annotations, animated: true)
         }
-        
-        mapView.addAnnotations(annotations)
     }
     
     private func showError(_ error: String) {
@@ -105,8 +111,75 @@ final class MapViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
+    
+    @objc private func locationButtonTapped() {
+        viewModel.moveToUserLocation()
+        let region = MKCoordinateRegion(center: viewModel.userLocation,
+                                      latitudinalMeters: 250,
+                                      longitudinalMeters: 250)
+        mapView.mapView.setRegion(region, animated: true)
+    }
+    
+    private func updateUserLocation(_ location: CLLocationCoordinate2D) {
+        let existingUserAnnotations = mapView.mapView.annotations.filter { $0 is UserLocationAnnotation }
+        mapView.mapView.removeAnnotations(existingUserAnnotations)
+        
+        let annotation = UserLocationAnnotation()
+        annotation.coordinate = location
+        mapView.mapView.addAnnotation(annotation)
+    }
 }
 
+extension MapViewController: MKMapViewDelegate {
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        switch annotation {
+        case is UserLocationAnnotation:
+            let identifier = "UserLocation"
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+            
+            if annotationView == nil {
+                annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+            } else {
+                annotationView?.annotation = annotation
+            }
+            
+            if let markerView = annotationView as? MKMarkerAnnotationView {
+                markerView.markerTintColor = .systemBlue
+                markerView.glyphImage = UIImage(systemName: "person.fill")
+                markerView.displayPriority = .required
+            }
+            
+            annotationView?.canShowCallout = false
+            return annotationView
+            
+        case let stopAnnotation as StopAnnotation:
+            let identifier = "StopAnnotation"
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+            
+            if annotationView == nil {
+                annotationView = MKMarkerAnnotationView(annotation: stopAnnotation, reuseIdentifier: identifier)
+            } else {
+                annotationView?.annotation = stopAnnotation
+            }
+            
+            if let markerView = annotationView as? MKMarkerAnnotationView {
+                markerView.markerTintColor = .systemRed
+                markerView.glyphImage = UIImage(systemName: "bus.fill")
+                markerView.displayPriority = .required
+                markerView.canShowCallout = true
+            }
+            
+            return annotationView
+            
+        default:
+            return nil
+        }
+    }
+    
+    func mapView(_ mapView: MKMapView, shouldCluster annotation: MKAnnotation) -> Bool {
+        return false
+    }
+}
 
 protocol MapViewControllerDelegate: AnyObject {
     func didSelectLocation(_ coordinate: CLLocationCoordinate2D)

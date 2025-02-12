@@ -40,7 +40,7 @@ final class ServiceDetailViewModel {
                 let stopsResponse = try await service.fetchStops()
                 
                 await MainActor.run {
-                    // Servise ait durakları filtrele
+                    
                     self.allStops = stopsResponse.stops.filter { stop in
                         stop.services?.contains(self.serviceNumber) ?? false
                     }
@@ -247,5 +247,23 @@ final class ServiceDetailViewModel {
         }
         
         return false
+    }
+    
+    struct VehicleAnnotationViewModel {
+        let coordinate: CLLocationCoordinate2D
+        let title: String
+        let subtitle: String
+        
+        init(vehicle: Vehicle) {
+            self.coordinate = CLLocationCoordinate2D(latitude: vehicle.latitude, longitude: vehicle.longitude)
+            self.title = "Bus \(vehicle.serviceName ?? "Unknown")"
+            self.subtitle = vehicle.destination ?? "Unknown Destination"
+        }
+    }
+    
+    @Published private(set) var vehicleAnnotations: [VehicleAnnotationViewModel] = []
+    
+    private func updateVehicleAnnotations(_ vehicles: [Vehicle]) {
+        self.vehicleAnnotations = vehicles.map { VehicleAnnotationViewModel(vehicle: $0) }
     }
 }

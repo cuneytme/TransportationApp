@@ -13,6 +13,10 @@ final class TimetableView: UIView {
         let control = UISegmentedControl(items: items)
         control.selectedSegmentIndex = 0
         control.translatesAutoresizingMaskIntoConstraints = false
+        control.backgroundColor = .systemBackground
+        control.selectedSegmentTintColor = .systemBlue
+        control.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .normal)
+        control.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
         return control
     }()
     
