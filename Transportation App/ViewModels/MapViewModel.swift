@@ -45,11 +45,45 @@ final class MapViewModel: NSObject {
     private func filterNearbyStops(_ stops: [Stop]) -> [Stop] {
         let userLocationObject = CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude)
         
-        return stops.filter { stop in
+        let nearbyStops = stops.filter { stop in
             let stopLocation = CLLocation(latitude: stop.latitude, longitude: stop.longitude)
             let distance = userLocationObject.distance(from: stopLocation)
             return distance <= maximumDistance
         }
+        
+        var groupedStops: [String: [Stop]] = [:]
+        for stop in nearbyStops {
+            groupedStops[stop.name, default: []].append(stop)
+        }
+        var finalStops: [Stop] = []
+        
+        for sameNameStops in groupedStops.values {
+            if sameNameStops.count == 1 {
+                finalStops.append(sameNameStops[0])
+                continue
+            }
+            
+            var processedIndices = Set<Int>()
+            
+            for (index, stop) in sameNameStops.enumerated() {
+                if processedIndices.contains(index) { continue }
+                
+                let stopLocation = CLLocation(latitude: stop.latitude, longitude: stop.longitude)
+                
+                for (otherIndex, otherStop) in sameNameStops.enumerated() {
+                    if processedIndices.contains(otherIndex) { continue }
+                    
+                    let otherLocation = CLLocation(latitude: otherStop.latitude, longitude: otherStop.longitude)
+                    if stopLocation.distance(from: otherLocation) < 50 {
+                        processedIndices.insert(otherIndex)
+                    }
+                }
+                
+                finalStops.append(stop)
+            }
+        }
+        
+        return finalStops
     }
     
     func startLiveUpdates() {

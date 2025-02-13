@@ -17,6 +17,14 @@ final class ServicesView: UIView {
         return searchBar
     }()
     
+    let segmentedControl: UISegmentedControl = {
+        let items = ["All", "Bus", "Tram"]
+        let segmented = UISegmentedControl(items: items)
+        segmented.selectedSegmentIndex = 0
+        segmented.translatesAutoresizingMaskIntoConstraints = false
+        return segmented
+    }()
+    
     let tableView: UITableView = {
         let table = UITableView()
         table.register(UITableViewCell.self, forCellReuseIdentifier: "ServiceCell")
@@ -43,6 +51,7 @@ final class ServicesView: UIView {
     private func setupUI() {
         backgroundColor = .white
         addSubview(searchBar)
+        addSubview(segmentedControl)
         addSubview(tableView)
         addSubview(activityIndicator)
         
@@ -51,7 +60,11 @@ final class ServicesView: UIView {
             searchBar.leadingAnchor.constraint(equalTo: leadingAnchor),
             searchBar.trailingAnchor.constraint(equalTo: trailingAnchor),
             
-            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            segmentedControl.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 8),
+            segmentedControl.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            segmentedControl.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            
+            tableView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 8),
             tableView.leadingAnchor.constraint(equalTo: leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: bottomAnchor),

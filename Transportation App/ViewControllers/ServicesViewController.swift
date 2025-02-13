@@ -38,6 +38,24 @@ final class ServicesViewController: UIViewController {
         servicesView.tableView.delegate = self
         servicesView.tableView.dataSource = self
         servicesView.searchBar.delegate = self
+        servicesView.segmentedControl.addTarget(self, 
+                                              action: #selector(segmentedControlValueChanged),
+                                              for: .valueChanged)
+    }
+    
+    @objc private func segmentedControlValueChanged(_ sender: UISegmentedControl) {
+        let transportType: TransportType
+        switch sender.selectedSegmentIndex {
+        case 0:
+            transportType = .all
+        case 1:
+            transportType = .bus
+        case 2:
+            transportType = .tram
+        default:
+            transportType = .all
+        }
+        viewModel.updateTransportType(transportType)
     }
     
     private func setupBindings() {
@@ -81,7 +99,14 @@ extension ServicesViewController: UITableViewDelegate, UITableViewDataSource {
         let service = viewModel.filteredServices[indexPath.row]
         
         var content = cell.defaultContentConfiguration()
-        content.text = "🚌 \(service)"
+        if let serviceType = viewModel.getServiceType(for: service) {
+            let icon = serviceType.lowercased() == "tram" ? "🚊" : "🚌"
+            content.text = "\(icon) \(service)"
+            print("Servis \(service) - Service Type: \(serviceType)")
+        } else {
+            content.text = "🚌 \(service)"
+        }
+        
         cell.contentConfiguration = content
         cell.accessoryType = .disclosureIndicator
         

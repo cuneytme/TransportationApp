@@ -8,15 +8,23 @@
 import Foundation
 import Combine
 
+enum TransportType {
+    case all
+    case bus
+    case tram
+}
+
 final class ServicesViewModel {
     @Published private(set) var services: [String] = []
     @Published private(set) var filteredServices: [String] = []
     @Published private(set) var stops: [Stop] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: String?
+    @Published private(set) var selectedTransportType: TransportType = .all
     
     private let service: TransportService
     private var allStops: [Stop] = []
+    private var currentSearchText: String?
     
     init(service: TransportService = TransportService()) {
         self.service = service
@@ -67,10 +75,42 @@ final class ServicesViewModel {
     }
     
     func filterServices(with searchText: String) {
-        if searchText.isEmpty {
-            filteredServices = services
-        } else {
-            filteredServices = services.filter { $0.lowercased().contains(searchText.lowercased()) }
+        currentSearchText = searchText
+        
+        updateTransportType(selectedTransportType)
+        
+        if !searchText.isEmpty {
+            filteredServices = filteredServices.filter { $0.lowercased().contains(searchText.lowercased()) }
         }
+    }
+    
+    func updateTransportType(_ type: TransportType) {
+        selectedTransportType = type
+        
+        switch type {
+        case .all:
+            filteredServices = services
+        case .bus:
+            filteredServices = services.filter { service in
+                guard let serviceType = getServiceType(for: service) else { return false }
+                return serviceType.lowercased() != "tram"
+            }
+        case .tram:
+            filteredServices = services.filter { service in
+                guard let serviceType = getServiceType(for: service) else { return false }
+                return serviceType.lowercased() == "tram"
+            }
+        }
+        
+        if let searchText = currentSearchText, !searchText.isEmpty {
+            filterServices(with: searchText)
+        }
+    }
+    
+    func getServiceType(for service: String) -> String? {
+        return allStops.first { stop in
+            guard let services = stop.services else { return false }
+            return services.contains(service)
+        }?.serviceType
     }
 } 
