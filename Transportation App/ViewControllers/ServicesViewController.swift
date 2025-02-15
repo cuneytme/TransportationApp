@@ -38,7 +38,7 @@ final class ServicesViewController: UIViewController {
         servicesView.tableView.delegate = self
         servicesView.tableView.dataSource = self
         servicesView.searchBar.delegate = self
-        servicesView.segmentedControl.addTarget(self, 
+        servicesView.segmentedControl.addTarget(self,
                                               action: #selector(segmentedControlValueChanged),
                                               for: .valueChanged)
     }
@@ -86,6 +86,13 @@ final class ServicesViewController: UIViewController {
                 self?.present(alert, animated: true)
             }
             .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: .favoritesDidChange)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.servicesView.tableView.reloadData()
+            }
+            .store(in: &cancellables)
     }
 }
 
@@ -102,13 +109,18 @@ extension ServicesViewController: UITableViewDelegate, UITableViewDataSource {
         if let serviceType = viewModel.getServiceType(for: service) {
             let icon = serviceType.lowercased() == "tram" ? "🚊" : "🚌"
             content.text = "\(icon) \(service)"
-            print("Servis \(service) - Service Type: \(serviceType)")
         } else {
             content.text = "🚌 \(service)"
         }
         
         cell.contentConfiguration = content
-        cell.accessoryType = .disclosureIndicator
+        
+        let favoriteButton = UIButton.createFavoriteButton()
+        favoriteButton.tag = indexPath.row
+        favoriteButton.isSelected = viewModel.isFavorite(serviceNumber: service)
+        favoriteButton.addTarget(self, action: #selector(favoriteButtonTapped(_:)), for: .touchUpInside)
+        
+        cell.accessoryView = favoriteButton
         
         return cell
     }
@@ -122,6 +134,12 @@ extension ServicesViewController: UITableViewDelegate, UITableViewDataSource {
         let serviceNumber = viewModel.filteredServices[indexPath.row]
         let serviceInfoVC = ServiceInfoViewController(serviceNumber: serviceNumber)
         navigationController?.pushViewController(serviceInfoVC, animated: true)
+    }
+    
+    @objc private func favoriteButtonTapped(_ sender: UIButton) {
+        let service = viewModel.filteredServices[sender.tag]
+        viewModel.toggleFavorite(serviceNumber: service)
+        sender.isSelected = viewModel.isFavorite(serviceNumber: service)
     }
 }
 

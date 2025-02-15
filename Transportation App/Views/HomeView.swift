@@ -20,7 +20,7 @@ final class HomeView: UIView {
     
     let mapButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Show Map", for: .normal)
+        button.setTitle("Show Near Stops", for: .normal)
         button.backgroundColor = .systemBlue
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 8
@@ -51,6 +51,16 @@ final class HomeView: UIView {
         return button
     }()
     
+    let favoritesButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Favorites", for: .normal)
+        button.backgroundColor = .systemOrange
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 8
+        button.clipsToBounds = true
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
     
     private let logoImageView: UIImageView = {
         let imageView = UIImageView()
@@ -74,7 +84,7 @@ final class HomeView: UIView {
         
         addSubview(logoImageView)
         addSubview(stackView)
-        [mapButton, stopsButton, servicesButton].forEach { stackView.addArrangedSubview($0) }
+        [mapButton, stopsButton, servicesButton, favoritesButton].forEach { stackView.addArrangedSubview($0) }
         
         NSLayoutConstraint.activate([
             logoImageView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 20),
@@ -88,7 +98,8 @@ final class HomeView: UIView {
             
             mapButton.heightAnchor.constraint(equalToConstant: 50),
             stopsButton.heightAnchor.constraint(equalToConstant: 50),
-            servicesButton.heightAnchor.constraint(equalToConstant: 50)
+            servicesButton.heightAnchor.constraint(equalToConstant: 50),
+            favoritesButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
     
@@ -105,6 +116,11 @@ final class HomeView: UIView {
     func servicesButtonAction(_ target: Any?, action: Selector) {
         servicesButton.removeTarget(nil, action: nil, for: .allEvents)
         servicesButton.addTarget(target, action: action, for: .touchUpInside)
+    }
+    
+    func favoritesButtonAction(_ target: Any?, action: Selector) {
+        favoritesButton.removeTarget(nil, action: nil, for: .allEvents)
+        favoritesButton.addTarget(target, action: action, for: .touchUpInside)
     }
 }
 

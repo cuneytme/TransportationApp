@@ -16,6 +16,8 @@ final class StopDetailViewModel {
     @Published private(set) var isLoading = false
     @Published private(set) var error: String?
     
+    var onServiceSelected: ((String) -> Void)?
+    
     init(service: TransportService = TransportService(), stop: Stop) {
         self.service = service
         self.stop = stop
@@ -52,5 +54,9 @@ final class StopDetailViewModel {
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
             }
         }
+    }
+    
+    func didSelectService(_ serviceName: String) {
+        onServiceSelected?(serviceName)
     }
 } 

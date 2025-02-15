@@ -30,6 +30,7 @@ final class StopDetailViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupBindings()
+        setupNavigationHandlers()
         viewModel.startLiveUpdates()
     }
     
@@ -68,6 +69,13 @@ final class StopDetailViewController: UIViewController {
             }
             .store(in: &cancellables)
     }
+    
+    private func setupNavigationHandlers() {
+        viewModel.onServiceSelected = { [weak self] serviceName in
+            let serviceDetailVC = ServiceDetailViewController(serviceNumber: serviceName)
+            self?.navigationController?.pushViewController(serviceDetailVC, animated: true)
+        }
+    }
 }
 
 extension StopDetailViewController: UITableViewDelegate, UITableViewDataSource {
@@ -96,5 +104,12 @@ extension StopDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         cell.contentConfiguration = content
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let route = viewModel.liveTimes[indexPath.section]
+        let departure = route.departures[indexPath.row]
+        viewModel.didSelectService(departure.routeName)
     }
 } 

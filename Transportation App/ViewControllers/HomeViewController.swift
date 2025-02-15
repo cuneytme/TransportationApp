@@ -56,6 +56,7 @@ final class HomeViewController: UIViewController {
         homeView.mapButtonAction(self, action: #selector(mapButtonTapped))
         homeView.stopsButtonAction(self, action: #selector(stopsButtonTapped))
         homeView.servicesButtonAction(self, action: #selector(servicesButtonTapped))
+        homeView.favoritesButtonAction(self, action: #selector(favoritesButtonTapped))
     }
     
     private func setupBindings() {
@@ -90,5 +91,10 @@ final class HomeViewController: UIViewController {
     
     @objc private func servicesButtonTapped() {
         viewModel.didTapServices?()
+    }
+    
+    @objc private func favoritesButtonTapped() {
+        let favoritesVC = FavoritesViewController()
+        navigationController?.pushViewController(favoritesVC, animated: true)
     }
 }

@@ -17,6 +17,7 @@ final class ServiceDetailView: UIView {
     
     let directionControl: UISegmentedControl = {
         let control = UISegmentedControl()
+        control.selectedSegmentIndex = 0
         control.translatesAutoresizingMaskIntoConstraints = false
         control.backgroundColor = .systemBackground
         control.selectedSegmentTintColor = .systemBlue

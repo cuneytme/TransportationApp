@@ -61,7 +61,6 @@ final class ServiceDetailViewModel {
                 
             } catch {
                 await MainActor.run {
-                    print("DEBUG: Error occurred: \(error)")
                     self.error = error.localizedDescription
                     self.isLoading = false
                 }

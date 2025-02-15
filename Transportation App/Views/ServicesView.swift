@@ -22,6 +22,10 @@ final class ServicesView: UIView {
         let segmented = UISegmentedControl(items: items)
         segmented.selectedSegmentIndex = 0
         segmented.translatesAutoresizingMaskIntoConstraints = false
+        segmented.backgroundColor = .systemBackground
+        segmented.selectedSegmentTintColor = .systemBlue
+        segmented.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .normal)
+        segmented.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
         return segmented
     }()
     

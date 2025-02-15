@@ -68,6 +68,13 @@ final class StopsViewController: UIViewController {
                 self?.present(alert, animated: true)
             }
             .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: .favoritesDidChange)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.stopsView.tableView.reloadData()
+            }
+            .store(in: &cancellables)
     }
 }
 
@@ -85,6 +92,13 @@ extension StopsViewController: UITableViewDelegate, UITableViewDataSource {
         content.secondaryText = "Location: \(stop.locality) • Services: \(stop.services?.joined(separator: ", ") ?? "")"
         cell.contentConfiguration = content
         
+        let favoriteButton = UIButton.createFavoriteButton()
+        favoriteButton.tag = indexPath.row
+        favoriteButton.isSelected = viewModel.isFavorite(stopId: stop.stopId)
+        favoriteButton.addTarget(self, action: #selector(favoriteButtonTapped(_:)), for: .touchUpInside)
+        
+        cell.accessoryView = favoriteButton
+        
         return cell
     }
     
@@ -93,6 +107,12 @@ extension StopsViewController: UITableViewDelegate, UITableViewDataSource {
         let stop = viewModel.filteredStops[indexPath.row]
         let stopDetailVC = StopDetailViewController(stop: stop)
         navigationController?.pushViewController(stopDetailVC, animated: true)
+    }
+    
+    @objc private func favoriteButtonTapped(_ sender: UIButton) {
+        let stop = viewModel.filteredStops[sender.tag]
+        viewModel.toggleFavorite(stop: stop)
+        sender.isSelected = viewModel.isFavorite(stopId: stop.stopId)
     }
 }
 

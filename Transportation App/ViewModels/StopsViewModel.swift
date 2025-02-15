@@ -15,9 +15,12 @@ final class StopsViewModel {
     @Published private(set) var error: String?
     
     private let service: TransportService
+    private let favoritesService: FavoritesService
     
-    init(service: TransportService = TransportService()) {
+    init(service: TransportService = TransportService(),
+         favoritesService: FavoritesService = FavoritesService()) {
         self.service = service
+        self.favoritesService = favoritesService
     }
     
     func fetchStops() {
@@ -55,5 +58,17 @@ final class StopsViewModel {
                 return searchableText.contains(searchText.lowercased())
             }
         }
+    }
+    
+    func isFavorite(stopId: Int) -> Bool {
+        return favoritesService.isFavorite(id: String(stopId))
+    }
+    
+    func toggleFavorite(stop: Stop) {
+        favoritesService.toggleFavorite(
+            id: String(stop.stopId),
+            name: stop.name,
+            type: .stop
+        )
     }
 } 

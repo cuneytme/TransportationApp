@@ -23,11 +23,26 @@ final class ServicesViewModel {
     @Published private(set) var selectedTransportType: TransportType = .all
     
     private let service: TransportService
+    private let favoritesService: FavoritesService
     private var allStops: [Stop] = []
     private var currentSearchText: String?
     
-    init(service: TransportService = TransportService()) {
+    init(service: TransportService = TransportService(), 
+         favoritesService: FavoritesService = FavoritesService()) {
         self.service = service
+        self.favoritesService = favoritesService
+    }
+    
+    func isFavorite(serviceNumber: String) -> Bool {
+        return favoritesService.isFavorite(id: serviceNumber)
+    }
+    
+    func toggleFavorite(serviceNumber: String) {
+        favoritesService.toggleFavorite(
+            id: serviceNumber,
+            name: serviceNumber,
+            type: .service
+        )
     }
     
     func fetchServices() {
