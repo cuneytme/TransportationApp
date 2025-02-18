@@ -7,6 +7,7 @@
 
 import FirebaseAuth
 import FirebaseFirestore
+import UIKit
 
 final class AuthViewModel {
     var didSignIn: ((User) -> Void)?
@@ -57,8 +58,6 @@ final class AuthViewModel {
     }
     
     func signIn(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
-     
-        
         auth.signIn(withEmail: email, password: password) { [weak self] result, error in
             if let error = error {
                 completion(.failure(error))
@@ -70,40 +69,23 @@ final class AuthViewModel {
                 return
             }
             
-            
             self?.db.collection("users").document(firebaseUser.uid).getDocument { snapshot, error in
                 if let error = error {
-                    
-                    let basicUser = User(id: firebaseUser.uid,
-                                      email: email,
-                                      fullName: "")
-                    completion(.success(basicUser))
+                    completion(.failure(error))
                     return
                 }
                 
                 if let data = snapshot?.data() {
-                    let user = User(id: firebaseUser.uid,
-                                  email: data["email"] as? String ?? email,
-                                  fullName: data["fullName"] as? String ?? "")
-                    completion(.success(user))
-                } else {
-                  
-                    let userData: [String: Any] = [
-                        "userId": firebaseUser.uid,
-                        "email": email,
-                        "fullName": "",
-                        "createdAt": FieldValue.serverTimestamp()
-                    ]
-                    
-                    self?.db.collection("users").document(firebaseUser.uid).setData(userData) { error in
-                        if let error = error {
+                    let user = User(data: data)
+                    DispatchQueue.main.async {
+                        let tabBarController = MainTabBarController(user: user)
+                        if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate,
+                           let window = sceneDelegate.window {
+                            window.rootViewController = tabBarController
+                            window.makeKeyAndVisible()
                         }
-                        
-                        let user = User(id: firebaseUser.uid,
-                                      email: email,
-                                      fullName: "")
-                        completion(.success(user))
                     }
+                    completion(.success(user))
                 }
             }
         }

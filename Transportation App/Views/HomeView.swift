@@ -18,56 +18,22 @@ final class HomeView: UIView {
         return stack
     }()
     
-    let mapButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Show Near Stops", for: .normal)
-        button.backgroundColor = .systemBlue
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 8
-        button.clipsToBounds = true
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
-    let stopsButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Show Stops", for: .normal)
-        button.backgroundColor = .systemGreen
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 8
-        button.clipsToBounds = true
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
-    let servicesButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Show Services", for: .normal)
-        button.backgroundColor = .systemIndigo
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 8
-        button.clipsToBounds = true
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
-    let favoritesButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Favorites", for: .normal)
-        button.backgroundColor = .systemOrange
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 8
-        button.clipsToBounds = true
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
     private let logoImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(named: "asis_logo")
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
+    }()
+    
+    let registerCardButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Register Your Card", for: .normal)
+        button.backgroundColor = .systemBlue
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 8
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
     }()
     
     override init(frame: CGRect) {
@@ -83,8 +49,7 @@ final class HomeView: UIView {
         backgroundColor = .white
         
         addSubview(logoImageView)
-        addSubview(stackView)
-        [mapButton, stopsButton, servicesButton, favoritesButton].forEach { stackView.addArrangedSubview($0) }
+        addSubview(registerCardButton)
         
         NSLayoutConstraint.activate([
             logoImageView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 20),
@@ -92,35 +57,11 @@ final class HomeView: UIView {
             logoImageView.widthAnchor.constraint(equalToConstant: 200),
             logoImageView.heightAnchor.constraint(equalToConstant: 200),
             
-            stackView.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 40),
-            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-            
-            mapButton.heightAnchor.constraint(equalToConstant: 50),
-            stopsButton.heightAnchor.constraint(equalToConstant: 50),
-            servicesButton.heightAnchor.constraint(equalToConstant: 50),
-            favoritesButton.heightAnchor.constraint(equalToConstant: 50)
+            registerCardButton.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 30),
+            registerCardButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            registerCardButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            registerCardButton.heightAnchor.constraint(equalToConstant: 50)
         ])
-    }
-    
-    func mapButtonAction(_ target: Any?, action: Selector) {
-        mapButton.removeTarget(nil, action: nil, for: .allEvents)
-        mapButton.addTarget(target, action: action, for: .touchUpInside)
-    }
-    
-    func stopsButtonAction(_ target: Any?, action: Selector) {
-        stopsButton.removeTarget(nil, action: nil, for: .allEvents)
-        stopsButton.addTarget(target, action: action, for: .touchUpInside)
-    }
-    
-    func servicesButtonAction(_ target: Any?, action: Selector) {
-        servicesButton.removeTarget(nil, action: nil, for: .allEvents)
-        servicesButton.addTarget(target, action: action, for: .touchUpInside)
-    }
-    
-    func favoritesButtonAction(_ target: Any?, action: Selector) {
-        favoritesButton.removeTarget(nil, action: nil, for: .allEvents)
-        favoritesButton.addTarget(target, action: action, for: .touchUpInside)
     }
 }
 

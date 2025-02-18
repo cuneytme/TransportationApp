@@ -28,73 +28,25 @@ final class HomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
-        setupActions()
         setupBindings()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        navigationController?.setNavigationBarHidden(false, animated: animated)
-        navigationController?.navigationBar.prefersLargeTitles = true
-    }
-    
-    private func setupUI() {
-        navigationController?.navigationBar.isHidden = false
-        
-        let profileButton = UIBarButtonItem(
-            image: UIImage(systemName: "person.circle"),
-            style: .plain,
-            target: self,
-            action: #selector(profileButtonTapped)
-        )
-        navigationItem.rightBarButtonItem = profileButton
-    }
-    
-    private func setupActions() {
-        
-        homeView.mapButtonAction(self, action: #selector(mapButtonTapped))
-        homeView.stopsButtonAction(self, action: #selector(stopsButtonTapped))
-        homeView.servicesButtonAction(self, action: #selector(servicesButtonTapped))
-        homeView.favoritesButtonAction(self, action: #selector(favoritesButtonTapped))
+        navigationController?.setNavigationBarHidden(true, animated: animated)
     }
     
     private func setupBindings() {
-        viewModel.didTapMap = { [weak self] in
-            let mapVC = MapViewController(viewModel: MapViewModel())
-            self?.navigationController?.pushViewController(mapVC, animated: true)
-        }
+        homeView.registerCardButton.addTarget(self, 
+                                            action: #selector(handleRegisterCard), 
+                                            for: .touchUpInside)
         
-        viewModel.didTapStops = { [weak self] in
-            let stopsVC = StopsViewController()
-            self?.navigationController?.pushViewController(stopsVC, animated: true)
-        }
-        
-        viewModel.didTapServices = { [weak self] in
-            let servicesVC = ServicesViewController()
-            self?.navigationController?.pushViewController(servicesVC, animated: true)
+        viewModel.didTapRegisterCard = { [weak self] in
+            // NFC READING WILL BE IMPLEMENTED HERE
         }
     }
     
-    @objc private func profileButtonTapped() {
-        let profileVC = ProfileViewController(user: user)
-        navigationController?.pushViewController(profileVC, animated: true)
-    }
-    
-    @objc private func mapButtonTapped() {
-        viewModel.didTapMap?()
-    }
-    
-    @objc private func stopsButtonTapped() {
-        viewModel.didTapStops?()
-    }
-    
-    @objc private func servicesButtonTapped() {
-        viewModel.didTapServices?()
-    }
-    
-    @objc private func favoritesButtonTapped() {
-        let favoritesVC = FavoritesViewController()
-        navigationController?.pushViewController(favoritesVC, animated: true)
+    @objc private func handleRegisterCard() {
+        viewModel.registerCard()
     }
 }

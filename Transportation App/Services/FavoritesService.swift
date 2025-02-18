@@ -1,12 +1,17 @@
 import Foundation
+import Combine
 
 extension Notification.Name {
     static let favoritesDidChange = Notification.Name("favoritesDidChange")
 }
 
 final class FavoritesService {
+    static let shared = FavoritesService() 
+    
     private let defaults = UserDefaults.standard
     private let favoritesKey = "userFavorites"
+    
+    let favoritesDidChangePublisher = PassthroughSubject<Void, Never>()
     
     func getFavorites() -> [Favorite] {
         guard let data = defaults.data(forKey: favoritesKey),
@@ -19,16 +24,22 @@ final class FavoritesService {
     func saveFavorite(_ favorite: Favorite) {
         var favorites = getFavorites()
         favorites.append(favorite)
-        if let encoded = try? JSONEncoder().encode(favorites) {
-            defaults.set(encoded, forKey: favoritesKey)
-        }
+        saveFavorites(favorites)
     }
     
     func removeFavorite(_ favorite: Favorite) {
         var favorites = getFavorites()
         favorites.removeAll { $0.id == favorite.id }
+        saveFavorites(favorites)
+    }
+    
+    private func saveFavorites(_ favorites: [Favorite]) {
         if let encoded = try? JSONEncoder().encode(favorites) {
             defaults.set(encoded, forKey: favoritesKey)
+            defaults.synchronize()
+            DispatchQueue.main.async {
+                self.favoritesDidChangePublisher.send()
+            }
         }
     }
     
@@ -46,7 +57,5 @@ final class FavoritesService {
             let favorite = Favorite(id: id, type: type, name: name, date: Date())
             saveFavorite(favorite)
         }
-        
-        NotificationCenter.default.post(name: .favoritesDidChange, object: nil)
     }
 } 

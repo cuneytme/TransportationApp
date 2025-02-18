@@ -7,7 +7,7 @@
 
 import UIKit
 
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
@@ -19,10 +19,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
         window = UIWindow(windowScene: windowScene)
-        let splashViewModel = SplashViewModel()
-        let splashViewController = SplashViewController(viewModel: splashViewModel)
         
-        let navigationController = UINavigationController(rootViewController: splashViewController)
+        let splashViewModel = SplashViewModel()
+        let splashVC = SplashViewController(viewModel: splashViewModel)
+        
+        let navigationController = UINavigationController(rootViewController: splashVC)
+        AppTheme.shared.configureNavigationBar(navigationController)
         
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()

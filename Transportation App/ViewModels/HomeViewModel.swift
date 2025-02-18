@@ -17,6 +17,8 @@ final class HomeViewModel {
     var didTapStops: (() -> Void)?
     var didTapServices: (() -> Void)?
     
+    var didTapRegisterCard: (() -> Void)?
+    
     init(user: User) {
         self.user = user
     }
@@ -32,5 +34,9 @@ final class HomeViewModel {
         } catch {
             //
         }
+    }
+    
+    func registerCard() {
+        didTapRegisterCard?()
     }
 }

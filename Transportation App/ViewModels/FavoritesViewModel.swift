@@ -6,37 +6,42 @@ final class FavoritesViewModel {
     @Published private(set) var navigationAction: NavigationAction?
     
     private let favoritesService: FavoritesService
+    private var cancellables = Set<AnyCancellable>()
     
     enum NavigationAction {
         case showServiceInfo(serviceNumber: String)
         case showStopDetail(stop: Stop)
     }
     
-    init(favoritesService: FavoritesService = FavoritesService()) {
+    init(favoritesService: FavoritesService = FavoritesService.shared) {
         self.favoritesService = favoritesService
+        setupBindings()
+        loadFavorites()
+    }
+    
+    private func setupBindings() {
+        favoritesService.favoritesDidChangePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.loadFavorites()
+            }
+            .store(in: &cancellables)
     }
     
     func loadFavorites() {
-        favorites = favoritesService.getFavorites()
+        DispatchQueue.main.async {
+            self.favorites = self.favoritesService.getFavorites()
+                .sorted { $0.date > $1.date }
+        }
     }
     
     func removeFavorite(_ favorite: Favorite) {
         favoritesService.removeFavorite(favorite)
         loadFavorites()
-        NotificationCenter.default.post(name: .favoritesDidChange, object: nil)
     }
     
     func toggleFavorite(id: String, name: String, type: Favorite.FavoriteType) {
-        if favoritesService.isFavorite(id: id) {
-            if let favorite = favorites.first(where: { $0.id == id }) {
-                removeFavorite(favorite)
-            }
-        } else {
-            let favorite = Favorite(id: id, type: type, name: name, date: Date())
-            favoritesService.saveFavorite(favorite)
-            loadFavorites()
-        }
-        NotificationCenter.default.post(name: .favoritesDidChange, object: nil)
+        favoritesService.toggleFavorite(id: id, name: name, type: type)
     }
     
     func navigateToDetail(for favorite: Favorite) {

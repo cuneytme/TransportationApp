@@ -218,38 +218,3 @@ final class TransportService {
         }
     }
 }
-
-struct ServiceJourneyResponse: Codable {
-    let service: ServiceJourney
-}
-
-struct ServiceJourney: Codable {
-    let serviceId: String
-    let stops: [ServiceStop]
-    
-    enum CodingKeys: String, CodingKey {
-        case serviceId = "service_id"
-        case stops
-    }
-}
-
-struct ServiceStop: Codable {
-    let stopId: String
-    let name: String
-    let direction: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case stopId = "stop_id"
-        case name = "stop_name"
-        case direction
-    }
-}
-
-enum NetworkError: LocalizedError {
-    case invalidURL
-    case invalidResponse
-    case networkConnection
-    case serverError(String)
-    case decodingError(String)
-    
-}

@@ -30,6 +30,8 @@ final class MapViewController: UIViewController {
         setupBindings()
         viewModel.startLiveUpdates()
         mapView.mapView.delegate = self
+        
+        self.title = "Near Stops"
     }
     
     private func setupUI() {
@@ -164,7 +166,7 @@ extension MapViewController: MKMapViewDelegate {
             
             if let markerView = annotationView as? MKMarkerAnnotationView {
                 markerView.markerTintColor = .systemRed
-                markerView.glyphImage = UIImage(systemName: "bus.fill")
+                markerView.glyphImage = UIImage(systemName: "s.circle.fill")
                 markerView.displayPriority = .required
                 markerView.canShowCallout = true
             }

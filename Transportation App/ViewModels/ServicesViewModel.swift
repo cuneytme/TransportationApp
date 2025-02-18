@@ -26,11 +26,24 @@ final class ServicesViewModel {
     private let favoritesService: FavoritesService
     private var allStops: [Stop] = []
     private var currentSearchText: String?
+    private var cancellables = Set<AnyCancellable>()
     
-    init(service: TransportService = TransportService(), 
-         favoritesService: FavoritesService = FavoritesService()) {
+    init(service: TransportService = TransportService(),
+         favoritesService: FavoritesService = FavoritesService.shared) {
         self.service = service
         self.favoritesService = favoritesService
+        setupBindings()
+    }
+    
+    private func setupBindings() {
+        favoritesService.favoritesDidChangePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                if let currentServices = self?.filteredServices {
+                    self?.filteredServices = currentServices
+                }
+            }
+            .store(in: &cancellables)
     }
     
     func isFavorite(serviceNumber: String) -> Bool {

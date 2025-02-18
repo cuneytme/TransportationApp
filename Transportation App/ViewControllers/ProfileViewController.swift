@@ -58,9 +58,6 @@ final class ProfileViewController: UIViewController {
                                          action: #selector(handleLogout), 
                                          for: .touchUpInside)
         
-        profileView.registerCardButton.addTarget(self,
-                                               action: #selector(handleRegisterCard),
-                                               for: .touchUpInside)
         
         viewModel.didLogout = { [weak self] in
             let loginVC = LoginViewController(viewModel: AuthViewModel())

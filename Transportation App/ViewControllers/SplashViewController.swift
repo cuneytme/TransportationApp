@@ -8,13 +8,11 @@
 import UIKit
 
 final class SplashViewController: UIViewController {
-    
+    private let splashView = SplashView()
     private let viewModel: SplashViewModel
-    private let splashView: SplashView
     
     init(viewModel: SplashViewModel) {
         self.viewModel = viewModel
-        self.splashView = SplashView()
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -22,30 +20,33 @@ final class SplashViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func loadView() {
+        view = splashView
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.addSubview(splashView)
-        splashView.frame = view.bounds
         setupBindings()
         viewModel.startSplashTimer()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+    
     private func setupBindings() {
         viewModel.navigateToLogin = { [weak self] in
-            let viewController = LoginViewController(viewModel: AuthViewModel())
-            viewController.modalPresentationStyle = .fullScreen
-            self?.present(viewController, animated: true)
+            let authViewModel = AuthViewModel()
+            let loginVC = LoginViewController(viewModel: authViewModel)
+            loginVC.modalPresentationStyle = .fullScreen
+            self?.present(loginVC, animated: true)
         }
         
         viewModel.navigateToHome = { [weak self] user in
-            let homeVC = HomeViewController(user: user)
-            
-            if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate,
-               let window = sceneDelegate.window {
-                let navController = UINavigationController(rootViewController: homeVC)
-                window.rootViewController = navController
-                window.makeKeyAndVisible()
-            }
+            let tabBarController = MainTabBarController(user: user)
+            tabBarController.modalPresentationStyle = .fullScreen
+            self?.present(tabBarController, animated: true)
         }
     }
 } 
