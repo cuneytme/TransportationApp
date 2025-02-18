@@ -38,6 +38,7 @@ final class ServiceDetailViewController: UIViewController {
         setupBindings()
         setupMapView()
         viewModel.fetchServiceDetails()
+        viewModel.startLiveUpdates()
     }
     
     private func setupUI() {

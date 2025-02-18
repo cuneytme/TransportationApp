@@ -186,4 +186,3 @@ extension MapViewController: MKMapViewDelegate {
 protocol MapViewControllerDelegate: AnyObject {
     func didSelectLocation(_ coordinate: CLLocationCoordinate2D)
 }
-

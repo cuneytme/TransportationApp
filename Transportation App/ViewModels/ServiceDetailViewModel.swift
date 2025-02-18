@@ -220,10 +220,11 @@ final class ServiceDetailViewModel {
                         self.vehicles = vehicles.filter { vehicle in
                             vehicle.serviceName == self.serviceNumber
                         }
+                        self.updateVehicleAnnotations(self.vehicles)
                     }
                     try await Task.sleep(nanoseconds: 30_000_000_000)
                 } catch {
-                   
+                   //
                 }
             }
         }
@@ -263,6 +264,8 @@ final class ServiceDetailViewModel {
     @Published private(set) var vehicleAnnotations: [VehicleAnnotationViewModel] = []
     
     private func updateVehicleAnnotations(_ vehicles: [Vehicle]) {
-        self.vehicleAnnotations = vehicles.map { VehicleAnnotationViewModel(vehicle: $0) }
+        self.vehicleAnnotations = vehicles.map { vehicle in
+            VehicleAnnotationViewModel(vehicle: vehicle)
+        }
     }
 }

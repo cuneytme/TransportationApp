@@ -61,7 +61,7 @@ final class ServicesViewController: UIViewController {
     private func setupBindings() {
         viewModel.$filteredServices
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
+            .sink { [weak self] services in
                 self?.servicesView.tableView.reloadData()
             }
             .store(in: &cancellables)
@@ -106,12 +106,21 @@ extension ServicesViewController: UITableViewDelegate, UITableViewDataSource {
         let service = viewModel.filteredServices[indexPath.row]
         
         var content = cell.defaultContentConfiguration()
+        
         if let serviceType = viewModel.getServiceType(for: service) {
             let icon = serviceType.lowercased() == "tram" ? "🚊" : "🚌"
             content.text = "\(icon) \(service)"
         } else {
             content.text = "🚌 \(service)"
         }
+        
+        if let stopDetails = viewModel.getServiceStopDetails(for: service) {
+            content.secondaryText = "\(stopDetails.first) ↔️ \(stopDetails.last)"
+        }
+        
+        content.textProperties.numberOfLines = 1
+        content.secondaryTextProperties.numberOfLines = 2
+        content.secondaryTextProperties.color = .gray
         
         cell.contentConfiguration = content
         

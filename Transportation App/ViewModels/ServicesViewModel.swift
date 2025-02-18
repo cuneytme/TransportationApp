@@ -64,28 +64,23 @@ final class ServicesViewModel {
         
         Task {
             do {
-                let stopsResponse = try await service.fetchStops()
-                await MainActor.run {
-                    self.allStops = stopsResponse.stops
-                    
-                    let allServices = stopsResponse.stops
+                let stops = try await service.fetchStops()
+               await MainActor.run {
+                    self.allStops = stops.stops
+                    let allServices = stops.stops
                         .compactMap { $0.services }
                         .flatMap { $0 }
                         .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                         .filter { !$0.isEmpty }
-                    
                     self.services = Array(Set(allServices))
-                        .sorted()
-                        .filter { service in
-                            let numericPart = service.components(separatedBy: CharacterSet.decimalDigits.inverted)
-                                .joined()
-                            return !numericPart.isEmpty
-                        }
                         .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
-                    
                     self.filteredServices = self.services
                     self.isLoading = false
                 }
+                  await MainActor.run {
+                    self.filteredServices = self.filteredServices
+                }
+                
             } catch {
                 await MainActor.run {
                     self.error = error.localizedDescription
@@ -136,9 +131,25 @@ final class ServicesViewModel {
     }
     
     func getServiceType(for service: String) -> String? {
-        return allStops.first { stop in
+        if let stop = allStops.first(where: { stop in
             guard let services = stop.services else { return false }
             return services.contains(service)
-        }?.serviceType
+        }) {
+            return stop.serviceType
+        }
+        return nil
     }
-} 
+    func getServiceStopDetails(for serviceNumber: String) -> (first: String, last: String)? {
+        let serviceStops = allStops.filter { stop in
+            guard let services = stop.services else { return false }
+            return services.contains(serviceNumber)
+        }
+        
+        if let firstStop = serviceStops.first?.name,
+           let lastStop = serviceStops.last?.name {
+            return (firstStop, lastStop)
+        }
+        
+        return nil
+    }
+}

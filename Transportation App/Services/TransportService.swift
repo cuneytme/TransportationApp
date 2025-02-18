@@ -8,41 +8,40 @@
 import Foundation
 
 final class TransportService {
+    private let session: URLSession
     private let baseURL = "https://tfe-opendata.com/api/v1"
+    private let retryCount = 3
     
-    func fetchStops() async throws -> StopsResponse {
-        guard let url = URL(string: "\(baseURL)/stops") else {
-            throw NetworkError.invalidURL
+    init() {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 60
+        self.session = URLSession(configuration: configuration)
+    }
+    
+    private func fetch<T: Decodable>(_ endpoint: String) async throws -> T {
+        guard let url = URL(string: "\(baseURL)/\(endpoint)") else {
+            throw URLError(.badURL)
         }
-        
+                
         var request = URLRequest(url: url)
-        request.timeoutInterval = 30
-        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw NetworkError.invalidResponse
-            }
-            
-            guard httpResponse.statusCode == 200 else {
-                if httpResponse.statusCode == 0 {
-                    throw NetworkError.networkConnection
-                }
-                throw NetworkError.serverError("HTTP \(httpResponse.statusCode)")
-            }
-            
-            return try JSONDecoder().decode(StopsResponse.self, from: data)
-        } catch let error as NetworkError {
-            throw error
-        } catch {
-            if (error as NSError).code == NSURLErrorNotConnectedToInternet {
-                throw NetworkError.networkConnection
-            }
-            throw NetworkError.serverError(error.localizedDescription)
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
         }
+        
+        if httpResponse.statusCode == 200 {
+            return try JSONDecoder().decode(T.self, from: data)
+        } else {
+            throw URLError(.badServerResponse)
+        }
+    }
+    
+    func fetchStops() async throws -> StopsResponse {
+        return try await fetch("stops")
     }
     
     func fetchVehicles() async throws -> [Vehicle] {
@@ -66,10 +65,7 @@ final class TransportService {
               
                 throw URLError(.badServerResponse)
             }
-            
-            if let jsonString = String(data: data, encoding: .utf8) {
-               // print("Vehicles JSON Response: \(jsonString)")
-            }
+          
             
             let decoder = JSONDecoder()
             let vehicleResponse = try decoder.decode(VehicleResponse.self, from: data)
@@ -79,48 +75,6 @@ final class TransportService {
             throw error
         }
     }
-    
-    func fetchServices() async throws -> ServicesResponse {
-        guard let url = URL(string: "\(baseURL)/services") else {
-            throw URLError(.badURL)
-        }
-        
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 30
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("3e48d4c3-b853-4d9e-85c2-4a0f49f35df7", forHTTPHeaderField: "X-API-KEY")
-        
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw URLError(.badServerResponse)
-            }
-            
-            guard httpResponse.statusCode == 200 else {
-              
-                throw URLError(.badServerResponse)
-            }
-            
-            if let jsonString = String(data: data, encoding: .utf8) {
-              //  print("Services JSON Response: \(jsonString)")
-            }
-            
-            let decoder = JSONDecoder()
-            do {
-                let response = try decoder.decode(ServicesResponse.self, from: data)
-                return response
-            } catch {
-              
-             
-                throw error
-            }
-        } catch {
-            throw error
-        }
-    }
-    
     func fetchLiveBusTimes(for stopId: Int) async throws -> [BusRoute] {
         guard let url = URL(string: "\(baseURL)/live_bus_times/\(stopId)") else {
             throw URLError(.badURL)
