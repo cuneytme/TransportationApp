@@ -80,4 +80,9 @@ final class ProfileView: UIView {
             logoutButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
+    
+    func configure(with user: User) {
+        nameLabel.text = user.fullName
+        emailLabel.text = user.email
+    }
 } 

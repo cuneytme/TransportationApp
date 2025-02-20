@@ -3,6 +3,7 @@ final class MenuViewModel {
     
     var didSelectProfile: (() -> Void)?
     var didSelectAbout: (() -> Void)?
+    var didRequestDismissMenu: (() -> Void)?
     
     init(user: User) {
         self.user = user
@@ -18,5 +19,9 @@ final class MenuViewModel {
     
     func getUser() -> User {
         return user
+    }
+    
+    func handleDismissMenu() {
+        didRequestDismissMenu?()
     }
 } 

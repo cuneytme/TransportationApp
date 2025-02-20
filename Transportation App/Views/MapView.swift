@@ -23,9 +23,12 @@ final class MapView: UIView {
         return button
     }()
     
+    var locationButtonTapped: (() -> Void)?
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
+        setupActions()
     }
     
     required init?(coder: NSCoder) {
@@ -37,8 +40,16 @@ final class MapView: UIView {
         mapView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         addSubview(mapView)
         
-        locationButton.frame = CGRect(x: bounds.width - 60, y: bounds.height - 100, width: 50, height: 50)
+        locationButton.frame = CGRect(x: bounds.width - 60, y: bounds.height - 160, width: 50, height: 50)
         locationButton.autoresizingMask = [.flexibleLeftMargin, .flexibleTopMargin]
         addSubview(locationButton)
+    }
+    
+    private func setupActions() {
+        locationButton.addTarget(self, action: #selector(handleLocationButtonTap), for: .touchUpInside)
+    }
+    
+    @objc private func handleLocationButtonTap() {
+        locationButtonTapped?()
     }
 } 

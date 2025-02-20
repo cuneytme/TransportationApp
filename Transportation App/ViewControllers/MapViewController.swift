@@ -45,7 +45,14 @@ final class MapViewController: UIViewController {
                                       longitudinalMeters: 5000)
         mapView.mapView.setRegion(region, animated: true)
         
-        mapView.locationButton.addTarget(self, action: #selector(locationButtonTapped), for: .touchUpInside)
+        mapView.locationButtonTapped = { [weak self] in
+            self?.viewModel.moveToUserLocation()
+            guard let location = self?.viewModel.userLocation else { return }
+            let region = MKCoordinateRegion(center: location,
+                                          latitudinalMeters: 250,
+                                          longitudinalMeters: 250)
+            self?.mapView.mapView.setRegion(region, animated: true)
+        }
     }
     
     private func setupBindings() {
@@ -112,14 +119,6 @@ final class MapViewController: UIViewController {
                                     preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
-    }
-    
-    @objc private func locationButtonTapped() {
-        viewModel.moveToUserLocation()
-        let region = MKCoordinateRegion(center: viewModel.userLocation,
-                                      latitudinalMeters: 250,
-                                      longitudinalMeters: 250)
-        mapView.mapView.setRegion(region, animated: true)
     }
     
     private func updateUserLocation(_ location: CLLocationCoordinate2D) {

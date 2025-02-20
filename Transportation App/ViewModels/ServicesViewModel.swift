@@ -28,6 +28,19 @@ final class ServicesViewModel {
     private var currentSearchText: String?
     private var cancellables = Set<AnyCancellable>()
     
+    private struct ServiceSearchData {
+        let number: String
+        let firstStop: String
+        let lastStop: String
+        let type: String?
+        
+        var searchableText: String {
+            return "\(number) \(firstStop) \(lastStop)".lowercased()
+        }
+    }
+    
+    private var serviceSearchData: [ServiceSearchData] = []
+    
     init(service: TransportService = TransportService(),
          favoritesService: FavoritesService = FavoritesService.shared) {
         self.service = service
@@ -65,22 +78,22 @@ final class ServicesViewModel {
         Task {
             do {
                 let stops = try await service.fetchStops()
-               await MainActor.run {
+                await MainActor.run {
                     self.allStops = stops.stops
                     let allServices = stops.stops
                         .compactMap { $0.services }
                         .flatMap { $0 }
                         .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                         .filter { !$0.isEmpty }
+                    
                     self.services = Array(Set(allServices))
                         .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+                    
+                    self.prepareSearchData()
+                    
                     self.filteredServices = self.services
                     self.isLoading = false
                 }
-                  await MainActor.run {
-                    self.filteredServices = self.filteredServices
-                }
-                
             } catch {
                 await MainActor.run {
                     self.error = error.localizedDescription
@@ -90,43 +103,62 @@ final class ServicesViewModel {
         }
     }
     
-    func selectService(_ serviceNumber: String) {
-        stops = allStops.filter { stop in
-            guard let services = stop.services else { return false }
-            return services.contains(serviceNumber)
+    private func prepareSearchData() {
+        serviceSearchData = services.compactMap { service in
+            guard let stopDetails = getServiceStopDetails(for: service) else { return nil }
+            return ServiceSearchData(
+                number: service,
+                firstStop: stopDetails.first,
+                lastStop: stopDetails.last,
+                type: getServiceType(for: service)
+            )
         }
     }
     
     func filterServices(with searchText: String) {
-        currentSearchText = searchText
-        
-        updateTransportType(selectedTransportType)
-        
-        if !searchText.isEmpty {
-            filteredServices = filteredServices.filter { $0.lowercased().contains(searchText.lowercased()) }
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            self.currentSearchText = searchText
+            
+            var filteredSearchData = self.serviceSearchData
+            
+            switch self.selectedTransportType {
+            case .all:
+                break
+            case .bus:
+                filteredSearchData = filteredSearchData.filter { data in
+                    data.type?.lowercased() != "tram"
+                }
+            case .tram:
+                filteredSearchData = filteredSearchData.filter { data in
+                    data.type?.lowercased() == "tram"
+                }
+            }
+            if !searchText.isEmpty {
+                let searchTerms = searchText.lowercased().split(separator: " ")
+                filteredSearchData = filteredSearchData.filter { data in
+                    searchTerms.allSatisfy { term in
+                        data.searchableText.contains(term.lowercased())
+                    }
+                }
+            }
+            
+            self.filteredServices = filteredSearchData.map { $0.number }
         }
     }
     
     func updateTransportType(_ type: TransportType) {
-        selectedTransportType = type
-        
-        switch type {
-        case .all:
-            filteredServices = services
-        case .bus:
-            filteredServices = services.filter { service in
-                guard let serviceType = getServiceType(for: service) else { return false }
-                return serviceType.lowercased() != "tram"
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            self.selectedTransportType = type
+            
+            if let searchText = self.currentSearchText {
+                self.filterServices(with: searchText)
+            } else {
+                self.filterServices(with: "")
             }
-        case .tram:
-            filteredServices = services.filter { service in
-                guard let serviceType = getServiceType(for: service) else { return false }
-                return serviceType.lowercased() == "tram"
-            }
-        }
-        
-        if let searchText = currentSearchText, !searchText.isEmpty {
-            filterServices(with: searchText)
         }
     }
     

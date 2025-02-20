@@ -49,6 +49,13 @@ final class MenuView: UIView {
         return view
     }()
     
+    weak var delegate: MenuViewDelegate?
+    var viewModel: MenuViewModel? {
+        didSet {
+            setupBindings()
+        }
+    }
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -96,10 +103,46 @@ final class MenuView: UIView {
     private func setupGestureRecognizers() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dimmedViewTapped))
         dimmedView.addGestureRecognizer(tapGesture)
+        
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        containerView.addGestureRecognizer(panGesture)
+    }
+    
+    private func setupBindings() {
+        profileButton.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
     }
     
     @objc private func dimmedViewTapped() {
         delegate?.menuViewDidTapDimmedView(self)
+    }
+    
+    @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: containerView)
+        
+        switch gesture.state {
+        case .changed:
+            guard translation.x >= 0 else { return }
+            containerView.transform = CGAffineTransform(translationX: translation.x, y: 0)
+            dimmedView.alpha = 0.5 - (translation.x / 500)
+            
+        case .ended:
+            let velocity = gesture.velocity(in: containerView)
+            if translation.x > containerView.frame.width / 2 || velocity.x > 500 {
+                delegate?.menuViewDidSwipeToDismiss(self)
+            } else {
+                UIView.animate(withDuration: 0.3) {
+                    self.containerView.transform = .identity
+                    self.dimmedView.alpha = 0.5
+                }
+            }
+            
+        default:
+            break
+        }
+    }
+    
+    @objc private func profileButtonTapped() {
+        delegate?.menuViewDidSelectProfile()
     }
     
     func show() {
@@ -117,10 +160,10 @@ final class MenuView: UIView {
             completion?()
         })
     }
-    
-    weak var delegate: MenuViewDelegate?
 }
 
 protocol MenuViewDelegate: AnyObject {
     func menuViewDidTapDimmedView(_ menuView: MenuView)
+    func menuViewDidSwipeToDismiss(_ menuView: MenuView)
+    func menuViewDidSelectProfile()
 } 

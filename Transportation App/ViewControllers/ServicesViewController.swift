@@ -34,13 +34,29 @@ final class ServicesViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "Services"
+        navigationItem.title = "Services"
+        navigationController?.isToolbarHidden = true
+        navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
+        navigationController?.navigationBar.shadowImage = UIImage()
+        navigationController?.navigationBar.isTranslucent = true
+        navigationController?.navigationBar.frame.size.height = 0
+        
         servicesView.tableView.delegate = self
         servicesView.tableView.dataSource = self
         servicesView.searchBar.delegate = self
         servicesView.segmentedControl.addTarget(self,
                                               action: #selector(segmentedControlValueChanged),
                                               for: .valueChanged)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: false)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: false)
     }
     
     @objc private func segmentedControlValueChanged(_ sender: UISegmentedControl) {
@@ -102,40 +118,34 @@ extension ServicesViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ServiceCell", for: indexPath)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: ServiceCardCell.identifier, for: indexPath) as? ServiceCardCell else {
+            return UITableViewCell()
+        }
+        
         let service = viewModel.filteredServices[indexPath.row]
+        let serviceType = viewModel.getServiceType(for: service)
+        let icon = serviceType?.lowercased() == "tram" ? "🚊" : "🚌"
+        let serviceText = "\(icon) \(service)"
         
-        var content = cell.defaultContentConfiguration()
-        
-        if let serviceType = viewModel.getServiceType(for: service) {
-            let icon = serviceType.lowercased() == "tram" ? "🚊" : "🚌"
-            content.text = "\(icon) \(service)"
-        } else {
-            content.text = "🚌 \(service)"
-        }
-        
+        var routeText: String? = nil
         if let stopDetails = viewModel.getServiceStopDetails(for: service) {
-            content.secondaryText = "\(stopDetails.first) ↔️ \(stopDetails.last)"
+            routeText = "\(stopDetails.first) ↔️ \(stopDetails.last)"
         }
         
-        content.textProperties.numberOfLines = 1
-        content.secondaryTextProperties.numberOfLines = 2
-        content.secondaryTextProperties.color = .gray
+        cell.configure(
+            with: serviceText,
+            route: routeText,
+            isFavorite: viewModel.isFavorite(serviceNumber: service)
+        )
         
-        cell.contentConfiguration = content
-        
-        let favoriteButton = UIButton.createFavoriteButton()
-        favoriteButton.tag = indexPath.row
-        favoriteButton.isSelected = viewModel.isFavorite(serviceNumber: service)
-        favoriteButton.addTarget(self, action: #selector(favoriteButtonTapped(_:)), for: .touchUpInside)
-        
-        cell.accessoryView = favoriteButton
+        cell.favoriteButton.tag = indexPath.row
+        cell.favoriteButton.addTarget(self, action: #selector(favoriteButtonTapped(_:)), for: .touchUpInside)
         
         return cell
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 80
+        return 120
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -159,5 +169,19 @@ extension ServicesViewController: UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.text = ""
+        searchBar.resignFirstResponder()
+        viewModel.filterServices(with: "")
+    }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchBar.showsCancelButton = true
+    }
+    
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        searchBar.showsCancelButton = false
     }
 } 
