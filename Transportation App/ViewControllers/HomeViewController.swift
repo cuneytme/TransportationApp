@@ -41,12 +41,36 @@ final class HomeViewController: UIViewController {
                                             action: #selector(handleRegisterCard), 
                                             for: .touchUpInside)
         
-        viewModel.didTapRegisterCard = { [weak self] in
-            // NFC READING WILL BE IMPLEMENTED HERE
+        viewModel.didUpdateCardReadStatus = { [weak self] isCardRead in
+            DispatchQueue.main.async {
+                self?.homeView.updateCardReadStatus(isCardRead: isCardRead)
+            }
         }
+        
+        viewModel.didUpdateRegisteredCardInfo = { [weak self] info in
+            DispatchQueue.main.async {
+                self?.homeView.updateRegisteredCardInfo(info)
+            }
+        }
+        
+        homeView.loadBalanceButton.addTarget(self, 
+                                           action: #selector(handleLoadBalance), 
+                                           for: .touchUpInside)
+        
+        homeView.payWithQRButton.addTarget(self, 
+                                         action: #selector(handlePayWithQR), 
+                                         for: .touchUpInside)
     }
     
     @objc private func handleRegisterCard() {
         viewModel.registerCard()
+    }
+    
+    @objc private func handleLoadBalance() {
+        viewModel.handleLoadBalanceTapped()
+    }
+    
+    @objc private func handlePayWithQR() {
+        viewModel.handlePayWithQRTapped()
     }
 }
