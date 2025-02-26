@@ -41,17 +41,27 @@ final class LoginViewController: UIViewController {
         loginView.registerButton.addTarget(self, action: #selector(handleShowRegister), for: .touchUpInside)
         
         viewModel.didLogin = { [weak self] user in
-            let homeVC = HomeViewController(user: user)
-            let navigationController = UINavigationController(rootViewController: homeVC)
-            navigationController.modalPresentationStyle = .fullScreen
-            
             DispatchQueue.main.async {
+                let tabBarController = MainTabBarController(user: user)
+                let navigationController = UINavigationController(rootViewController: tabBarController)
+                navigationController.modalPresentationStyle = .fullScreen
+                
+                let appearance = UINavigationBarAppearance()
+                appearance.configureWithOpaqueBackground()
+                appearance.backgroundColor = .appPrimary
+                appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+                
+                navigationController.navigationBar.standardAppearance = appearance
+                navigationController.navigationBar.scrollEdgeAppearance = appearance
+                navigationController.navigationBar.compactAppearance = appearance
+                navigationController.navigationBar.tintColor = .white
+                
                 if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate,
                    let window = sceneDelegate.window {
                     UIView.transition(with: window,
-                                   duration: 0.3,
-                                   options: .transitionCrossDissolve,
-                                   animations: {
+                                    duration: 0.3,
+                                    options: .transitionCrossDissolve,
+                                    animations: {
                         window.rootViewController = navigationController
                     })
                 }
@@ -82,40 +92,7 @@ final class LoginViewController: UIViewController {
             return
         }
         
-        view.isUserInteractionEnabled = false
-        loginView.loginButton.setTitle("Logging in...", for: .normal)
-        
-        viewModel.signIn(email: email, password: password) { [weak self] result in
-            DispatchQueue.main.async {
-                self?.view.isUserInteractionEnabled = true
-                self?.loginView.loginButton.setTitle("Login", for: .normal)
-                
-                switch result {
-                case .success(let user):
-                    let homeVC = HomeViewController(user: user)
-                    homeVC.modalPresentationStyle = .fullScreen
-                    self?.present(homeVC, animated: true)
-                    
-                case .failure(let error):
-                    let errorMessage = self?.handleFirebaseError(error) ?? error.localizedDescription
-                    self?.showAlert(title: "Error", message: errorMessage)
-                }
-            }
-        }
-    }
-    
-    private func handleFirebaseError(_ error: Error) -> String {
-        let nsError = error as NSError
-        switch nsError.code {
-        case AuthErrorCode.wrongPassword.rawValue:
-            return "Invalid email or password"
-        case AuthErrorCode.invalidEmail.rawValue:
-            return "Invalid email format"
-        case AuthErrorCode.userNotFound.rawValue:
-            return "User not found"
-        default:
-            return error.localizedDescription
-        }
+        viewModel.login(email: email, password: password)
     }
     
     @objc private func handleShowRegister() {

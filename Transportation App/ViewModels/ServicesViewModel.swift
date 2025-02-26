@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import UIKit
 
 enum TransportType {
     case all
@@ -183,5 +184,11 @@ final class ServicesViewModel {
         }
         
         return nil
+    }
+    
+    func getServiceIcon(for serviceType: String?) -> UIImage? {
+        return serviceType?.lowercased() == "tram" ? 
+            UIImage(named: "tram") : 
+            UIImage(named: "service")
     }
 }

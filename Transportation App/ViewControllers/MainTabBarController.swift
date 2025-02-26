@@ -1,3 +1,10 @@
+//
+//  MainTabBarController.swift
+//  Transportation App
+//
+//  Created by Cüneyt Elbastı on 23.02.2025.
+//
+
 import UIKit
 import Combine
 
@@ -6,8 +13,10 @@ final class MainTabBarController: UITabBarController {
     private let viewModel: MainTabViewModel
     private var cancellables = Set<AnyCancellable>()
     private var menuViewController: UIViewController?
+    private let user: User
     
     init(user: User) {
+        self.user = user
         self.viewModel = MainTabViewModel(user: user)
         super.init(nibName: nil, bundle: nil)
     }
@@ -44,13 +53,15 @@ final class MainTabBarController: UITabBarController {
         
         viewModel.didRequestShowProfile = { [weak self] in
             guard let self = self else { return }
-            let profileView = ProfileView()
-            profileView.configure(with: self.viewModel.getUser())
-            
-            let profileVC = UIViewController()
-            profileVC.view = profileView
+            let profileVC = ProfileViewController(user: self.viewModel.getUser())
             let navController = UINavigationController(rootViewController: profileVC)
             self.present(navController, animated: true)
+        }
+        
+        viewModel.didRequestShowInfo = { [weak self] in
+            let infoVC = InfoViewController(viewModel: InfoViewModel())
+            let navController = UINavigationController(rootViewController: infoVC)
+            self?.present(navController, animated: true)
         }
     }
     
@@ -59,6 +70,16 @@ final class MainTabBarController: UITabBarController {
         menuButton.target = self
         menuButton.action = #selector(menuButtonTapped)
         navigationItem.rightBarButtonItem = menuButton
+        
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .appPrimary
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.compactAppearance = appearance
+        navigationController?.navigationBar.tintColor = .white
     }
     
     @objc private func menuButtonTapped() {
@@ -97,6 +118,12 @@ extension MainTabBarController: MenuViewDelegate {
     func menuViewDidSelectProfile() {
         menuViewController?.dismiss(animated: false) { [weak self] in
             self?.viewModel.handleProfileSelection()
+        }
+    }
+    
+    func menuViewDidSelectInfo() {
+        menuViewController?.dismiss(animated: false) { [weak self] in
+            self?.viewModel.handleInfoSelection()
         }
     }
 } 

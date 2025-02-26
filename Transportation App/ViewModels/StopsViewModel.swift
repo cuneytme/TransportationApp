@@ -13,6 +13,7 @@ final class StopsViewModel {
     @Published private(set) var filteredStops: [Stop] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: String?
+    @Published private(set) var currentSearchText: String?
     
     private let service: TransportService
     private let favoritesService: FavoritesService
@@ -59,10 +60,11 @@ final class StopsViewModel {
     }
     
     func filterStops(with searchText: String) {
-        if searchText.isEmpty {
-            filteredStops = stops
-        } else {
-            filteredStops = stops.filter { stop in
+        currentSearchText = searchText
+        
+        var filtered = stops
+        if !searchText.isEmpty {
+            filtered = filtered.filter { stop in
                 let searchableText = [
                     stop.name,
                     stop.locality,
@@ -72,6 +74,8 @@ final class StopsViewModel {
                 return searchableText.contains(searchText.lowercased())
             }
         }
+        
+        filteredStops = filtered
     }
     
     func isFavorite(stopId: Int) -> Bool {

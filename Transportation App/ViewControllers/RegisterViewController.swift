@@ -20,6 +20,7 @@ final class RegisterViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupDelegates()
+        setupTitleButton()
     }
     private func setupUI() {
         title = "Register"
@@ -35,13 +36,42 @@ final class RegisterViewController: UIViewController {
         registerView.fullNameTextField.delegate = self
     }
     
+    private func setupTitleButton() {
+        registerView.titleButton.addTarget(self, 
+                                         action: #selector(handleTitleSelection), 
+                                         for: .touchUpInside)
+        
+        viewModel.didUpdateTitle = { [weak self] title in
+            self?.registerView.titleButton.setTitle(title, for: .normal)
+        }
+    }
+    
+    @objc private func handleTitleSelection() {
+        let alertController = UIAlertController(title: "Select Title", 
+                                              message: nil, 
+                                              preferredStyle: .actionSheet)
+        
+        AuthViewModel.UserTitle.allCases.forEach { title in
+            let action = UIAlertAction(title: title.rawValue, style: .default) { [weak self] _ in
+                self?.viewModel.updateTitle(title.rawValue)
+            }
+            alertController.addAction(action)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true)
+    }
+    
     @objc private func handleRegister() {
         guard let email = registerView.emailTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               !email.isEmpty,
               let password = registerView.passwordTextField.text,
               !password.isEmpty,
               let fullName = registerView.fullNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !fullName.isEmpty else {
+              !fullName.isEmpty,
+              !viewModel.selectedTitle.isEmpty else {
             showAlert(title: "Error", message: "Please fill in all fields")
             return
         }
@@ -70,12 +100,12 @@ final class RegisterViewController: UIViewController {
                         if let error = error {
                             self?.showAlert(title: "Warning", 
                                           message: "Account created but some data couldn't be saved. Please try logging out and back in.") {
-                                self?.navigateToProfile(with: user)
+                                self?.navigateToHome(with: user)
                             }
                         } else {
                             self?.showAlert(title: "Success", 
                                           message: "Registration successful!") {
-                                self?.navigateToProfile(with: user)
+                                self?.navigateToHome(with: user)
                             }
                         }
                     }
@@ -119,17 +149,22 @@ final class RegisterViewController: UIViewController {
         present(alert, animated: true)
     }
     
-    private func navigateToProfile(with user: User) {
-        let homeVC = HomeViewController(user: user)
+    private func navigateToHome(with user: User) {
+        let tabBarController = MainTabBarController(user: user)
         
-        let profileVC = ProfileViewController(user: user)
-        
-        let navigationController = UINavigationController(rootViewController: homeVC)
-        navigationController.modalPresentationStyle = .fullScreen
-        navigationController.pushViewController(profileVC, animated: false)
-        
-        UIApplication.shared.windows.first?.rootViewController = navigationController
-        UIApplication.shared.windows.first?.makeKeyAndVisible()
+        if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate,
+           let window = sceneDelegate.window {
+            let navigationController = UINavigationController(rootViewController: tabBarController)
+            AppTheme.shared.configureNavigationBar(navigationController)
+            
+            UIView.transition(with: window,
+                             duration: 0.3,
+                             options: .transitionCrossDissolve,
+                             animations: {
+                window.rootViewController = navigationController
+            })
+            window.makeKeyAndVisible()
+        }
     }
     
     @objc private func handleBack() {

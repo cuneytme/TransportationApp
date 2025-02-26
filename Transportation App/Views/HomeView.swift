@@ -42,7 +42,7 @@ final class HomeView: UIView {
         if let image = UIImage(named: "edinburgh-image")?.withAlpha(0.3) {
             button.setBackgroundImage(image, for: .normal)
         }
-        button.setTitleColor(.black, for: .normal)
+        button.setTitleColor(.buttonColor, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
         button.layer.cornerRadius = 8
         button.layer.borderWidth = 4
@@ -59,12 +59,26 @@ final class HomeView: UIView {
     let registeredCardButton: UIButton = {
         let button = UIButton(type: .system)
         button.titleLabel?.numberOfLines = 0
-        button.titleLabel?.textAlignment = .center
-        if let image = UIImage(named: "edinburgh-image")?.withAlpha(0.3) {
-            button.setBackgroundImage(image, for: .normal)
+        button.titleLabel?.textAlignment = .left
+        button.titleLabel?.lineBreakMode = .byWordWrapping
+        if let image = UIImage(named: "edinburgh-image") {
+            let whiteOverlay = UIColor.white.withAlphaComponent(0.7)
+            UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
+            if let context = UIGraphicsGetCurrentContext() {
+                image.draw(in: CGRect(origin: .zero, size: image.size))
+                context.setFillColor(whiteOverlay.cgColor)
+                context.fill(CGRect(origin: .zero, size: image.size))
+                if let overlaidImage = UIGraphicsGetImageFromCurrentImageContext() {
+                    button.setBackgroundImage(overlaidImage, for: .normal)
+                }
+            }
+            UIGraphicsEndImageContext()
         }
         button.setTitleColor(.black, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
+        button.contentHorizontalAlignment = .left
+        button.contentVerticalAlignment = .top
+        button.contentEdgeInsets = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
         button.layer.cornerRadius = 8
         button.layer.borderWidth = 4
         button.layer.borderColor = UIColor.buttonColor.cgColor
@@ -77,6 +91,7 @@ final class HomeView: UIView {
         button.isHidden = true
         return button
     }()
+       
     
     let loadBalanceButton: UIButton = {
         let button = UIButton(type: .system)
@@ -119,7 +134,7 @@ final class HomeView: UIView {
     }
     
     private func setupUI() {
-        backgroundColor = .white
+        backgroundColor = .systemBlue
         
         addSubview(logoImageView)
         addSubview(registerCardButton)
@@ -135,12 +150,12 @@ final class HomeView: UIView {
             logoImageView.widthAnchor.constraint(equalToConstant: 200),
             logoImageView.heightAnchor.constraint(equalToConstant: 180),
             
-            registerCardButton.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 30),
+            registerCardButton.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: -10),
             registerCardButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             registerCardButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             registerCardButton.heightAnchor.constraint(equalToConstant: 200),
             
-            registeredCardButton.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 30),
+            registeredCardButton.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: -10),
             registeredCardButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             registeredCardButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             registeredCardButton.heightAnchor.constraint(equalToConstant: 200),
@@ -153,12 +168,16 @@ final class HomeView: UIView {
     }
     
     func updateCardReadStatus(isCardRead: Bool) {
-        registerCardButton.isHidden = isCardRead
+      registerCardButton.isHidden = isCardRead
         registeredCardButton.isHidden = !isCardRead
+        layoutIfNeeded()
     }
     
     func updateRegisteredCardInfo(_ info: String) {
-        registeredCardButton.setTitle(info, for: .normal)
+      registeredCardButton.setTitle(info, for: .normal)
+        registeredCardButton.layoutIfNeeded()
+        setNeedsLayout()
+        layoutIfNeeded()
     }
 }
 

@@ -1,3 +1,11 @@
+//
+//  MainTabViewModel.swift
+//  Transportation App
+//
+//  Created by Cüneyt Elbastı on 28.01.2025.
+//
+
+
 import UIKit
 import Combine
 
@@ -10,6 +18,7 @@ final class MainTabViewModel {
     
     var didRequestShowMenu: (() -> Void)?
     var didRequestShowProfile: (() -> Void)?
+    var didRequestShowInfo: (() -> Void)?
     
     init(user: User) {
         self.user = user
@@ -21,6 +30,10 @@ final class MainTabViewModel {
     private func setupMenuBindings() {
         menuViewModel.didSelectProfile = { [weak self] in
             self?.didRequestShowProfile?()
+        }
+        
+        menuViewModel.didSelectInfo = { [weak self] in
+            self?.didRequestShowInfo?()
         }
     }
     
@@ -60,7 +73,7 @@ final class MainTabViewModel {
         let favoritesVC = createNavController(
             for: FavoritesViewController(),
             title: "Favorites",
-            image: UIImage(systemName: "heart")
+            image: UIImage(systemName: "star")
         )
         
         viewControllers = [homeVC, mapVC, servicesVC, stopsVC, favoritesVC]
@@ -104,5 +117,9 @@ final class MainTabViewModel {
     
     func getMenuViewModel() -> MenuViewModel {
         return menuViewModel
+    }
+    
+    func handleInfoSelection() {
+        didRequestShowInfo?()
     }
 } 

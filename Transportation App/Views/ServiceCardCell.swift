@@ -1,3 +1,10 @@
+//
+//  ServiceCardCell.swift
+//  Transportation App
+//
+//  Created by Cüneyt Elbastı on 27.01.2025.
+//
+
 import UIKit
 
 final class ServiceCardCell: UITableViewCell {
@@ -15,12 +22,11 @@ final class ServiceCardCell: UITableViewCell {
         return view
     }()
     
-    private let transportIconLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 30)
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+    private let transportIconImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
     }()
     
     private let contentStackView: UIStackView = {
@@ -34,7 +40,7 @@ final class ServiceCardCell: UITableViewCell {
     
     private let serviceNumberLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 18, weight: .bold)
+        label.font = .systemFont(ofSize: 20, weight: .bold)
         label.textColor = .white
         return label
     }()
@@ -83,7 +89,7 @@ final class ServiceCardCell: UITableViewCell {
     private let transportContainer: UIStackView = {
         let stack = UIStackView()
         stack.axis = .horizontal
-        stack.spacing = 0
+        stack.spacing = 8
         stack.alignment = .center
         stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
@@ -119,7 +125,7 @@ final class ServiceCardCell: UITableViewCell {
         mainStackView.addArrangedSubview(transportContainer)
         mainStackView.addArrangedSubview(routeStackView)
         
-        transportContainer.addArrangedSubview(transportIconLabel)
+        transportContainer.addArrangedSubview(transportIconImageView)
         transportContainer.addArrangedSubview(serviceNumberLabel)
         
         routeStackView.addArrangedSubview(firstStopLabel)
@@ -144,14 +150,20 @@ final class ServiceCardCell: UITableViewCell {
             
             directionImageView.heightAnchor.constraint(equalToConstant: 16),
             
-            transportContainer.widthAnchor.constraint(equalToConstant: 80)
+            transportContainer.widthAnchor.constraint(equalToConstant: 120),
+            
+            transportIconImageView.widthAnchor.constraint(equalToConstant: 64),
+            transportIconImageView.heightAnchor.constraint(equalToConstant: 64)
         ])
     }
     
     func configure(with service: String, route: String?, isFavorite: Bool) {
         let components = service.components(separatedBy: " ")
         if components.count >= 2 {
-            transportIconLabel.text = components[0] 
+            let serviceType = components[0]
+            transportIconImageView.image = serviceType == "tram" ? 
+                UIImage(named: "tram") : 
+                UIImage(named: "service")
             serviceNumberLabel.text = components[1]
         }
         

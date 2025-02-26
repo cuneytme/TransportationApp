@@ -13,17 +13,19 @@ final class TimetableView: UIView {
         let control = UISegmentedControl(items: items)
         control.selectedSegmentIndex = 0
         control.translatesAutoresizingMaskIntoConstraints = false
-        control.backgroundColor = .systemBackground
-        control.selectedSegmentTintColor = .systemBlue
-        control.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .normal)
-        control.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
+        control.backgroundColor = .white
+        control.selectedSegmentTintColor = .appPrimary
+        control.setTitleTextAttributes([.foregroundColor: UIColor.appPrimary], for: .normal)
+        control.setTitleTextAttributes([.foregroundColor: UIColor.buttonColor], for: .selected)
         return control
     }()
     
     let tableView: UITableView = {
         let table = UITableView()
-        table.register(UITableViewCell.self, forCellReuseIdentifier: "TimetableCell")
+        table.register(TimetableCell.self, forCellReuseIdentifier: TimetableCell.identifier)
         table.translatesAutoresizingMaskIntoConstraints = false
+        table.backgroundColor = .systemBlue
+        table.separatorStyle = .none
         return table
     }()
     
@@ -32,6 +34,12 @@ final class TimetableView: UIView {
         indicator.translatesAutoresizingMaskIntoConstraints = false
         indicator.hidesWhenStopped = true
         return indicator
+    }()
+    
+    let timelineView: TimelineView = {
+        let view = TimelineView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
     }()
     
     override init(frame: CGRect) {
@@ -44,8 +52,9 @@ final class TimetableView: UIView {
     }
     
     private func setupUI() {
-        backgroundColor = .white
+        backgroundColor = .systemBlue
         addSubview(segmentedControl)
+        addSubview(timelineView)
         addSubview(tableView)
         addSubview(activityIndicator)
         
@@ -54,7 +63,12 @@ final class TimetableView: UIView {
             segmentedControl.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             segmentedControl.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             
-            tableView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 8),
+            timelineView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 16),
+            timelineView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            timelineView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            timelineView.heightAnchor.constraint(equalToConstant: 24),
+            
+            tableView.topAnchor.constraint(equalTo: timelineView.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: bottomAnchor),
@@ -62,5 +76,7 @@ final class TimetableView: UIView {
             activityIndicator.centerXAnchor.constraint(equalTo: centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
+        
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)
     }
 } 

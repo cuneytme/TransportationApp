@@ -148,17 +148,40 @@ final class ServiceDetailViewController: UIViewController {
     }
     
     private func updateVehicleAnnotations(_ vehicles: [ServiceDetailViewModel.VehicleAnnotationViewModel]) {
-        let existingVehicleAnnotations = serviceDetailView.mapView.annotations.filter { $0 is VehicleAnnotation }
-        serviceDetailView.mapView.removeAnnotations(existingVehicleAnnotations)
+    
+        let existingAnnotations = serviceDetailView.mapView.annotations
+            .compactMap { $0 as? VehicleAnnotation }
+            .reduce(into: [String: VehicleAnnotation]()) { dict, annotation in
+                dict[annotation.vehicleId] = annotation
+            }
+        var newAnnotations = [VehicleAnnotation]()
         
-        let annotations = vehicles.map { vehicle -> VehicleAnnotation in
-            let annotation = VehicleAnnotation(coordinate: vehicle.coordinate)
-            annotation.title = vehicle.title
-            annotation.subtitle = vehicle.subtitle
-            return annotation
+        for vehicle in vehicles {
+            if let existingAnnotation = existingAnnotations[vehicle.vehicleId] {
+                
+                UIView.animate(withDuration: 1.0) {
+                    existingAnnotation.coordinate = vehicle.coordinate
+                }
+                
+                existingAnnotation.title = vehicle.title
+                existingAnnotation.subtitle = vehicle.subtitle
+            } else {
+                let annotation = VehicleAnnotation(coordinate: vehicle.coordinate, vehicleId: vehicle.vehicleId)
+                annotation.title = vehicle.title
+                annotation.subtitle = vehicle.subtitle
+                newAnnotations.append(annotation)
+            }
         }
         
-        serviceDetailView.mapView.addAnnotations(annotations)
+        let currentVehicleIds = Set(vehicles.map { $0.vehicleId })
+        let annotationsToRemove = existingAnnotations.values.filter { !currentVehicleIds.contains($0.vehicleId) }
+        
+        if !newAnnotations.isEmpty {
+            serviceDetailView.mapView.addAnnotations(newAnnotations)
+        }
+        if !annotationsToRemove.isEmpty {
+            serviceDetailView.mapView.removeAnnotations(Array(annotationsToRemove))
+        }
     }
     
     private func updateDirectionControl(with directions: [RouteDirection]) {
@@ -193,39 +216,10 @@ final class ServiceDetailViewController: UIViewController {
 
 extension ServiceDetailViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        switch annotation {
-        case is StopAnnotation:
-            let view = mapView.dequeueReusableAnnotationView(withIdentifier: AnnotationIdentifier.stop, for: annotation) as! MKMarkerAnnotationView
-            configureStopAnnotationView(view)
-            return view
-            
-        case is VehicleAnnotation:
-            let view = mapView.dequeueReusableAnnotationView(withIdentifier: AnnotationIdentifier.vehicle, for: annotation) as! MKMarkerAnnotationView
-            configureVehicleAnnotationView(view)
-            return view
-            
-        default:
-            return nil
-        }
+        return MapAnnotationView.createAnnotationView(for: annotation, on: mapView)
     }
     
-    private func configureStopAnnotationView(_ view: MKMarkerAnnotationView) {
-        view.displayPriority = .required
-        view.markerTintColor = .systemRed
-        view.glyphImage = UIImage(systemName: "s.circle.fill")
-        view.glyphTintColor = .white
-        view.clusteringIdentifier = nil
-        view.collisionMode = .none
-        view.canShowCallout = true
-    }
-    
-    private func configureVehicleAnnotationView(_ view: MKMarkerAnnotationView) {
-        view.displayPriority = .required
-        view.markerTintColor = .systemGreen
-        view.glyphImage = UIImage(systemName: "bus.fill")
-        view.glyphTintColor = .white
-        view.clusteringIdentifier = nil
-        view.collisionMode = .none
-        view.canShowCallout = true
+    func mapView(_ mapView: MKMapView, shouldCluster annotation: MKAnnotation) -> Bool {
+        return false
     }
 }

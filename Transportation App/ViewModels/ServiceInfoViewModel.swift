@@ -12,15 +12,15 @@ final class ServiceInfoViewModel {
     private let serviceNumber: String
     private let service: TransportService
     
-    @Published private(set) var serviceInfo: String = ""
     @Published private(set) var stops: [Stop] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: String?
     
+    var dismissTrigger: (() -> Void)?
+    
     init(serviceNumber: String, service: TransportService = TransportService()) {
         self.serviceNumber = serviceNumber
         self.service = service
-        setupServiceInfo()
         fetchServiceStops()
     }
 
@@ -62,15 +62,15 @@ final class ServiceInfoViewModel {
         }
     }
     
-    private func setupServiceInfo() {
-        serviceInfo = "Service No: \(serviceNumber)"
-    }
-    
     func getServiceNumber() -> String {
         return serviceNumber
     }
     
     func getFirstStopId() -> Int? {
         return stops.first?.stopId
+    }
+    
+    func handleBackgroundTap() {
+        dismissTrigger?()
     }
 } 

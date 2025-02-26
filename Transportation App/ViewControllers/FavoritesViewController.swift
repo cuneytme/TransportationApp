@@ -1,3 +1,10 @@
+//
+//  FavoritesViewController.swift
+//  Transportation App
+//
+//  Created by Cüneyt Elbastı on 23.02.2025.
+//
+
 import UIKit
 import Combine
 
@@ -26,14 +33,25 @@ final class FavoritesViewController: UIViewController {
         viewModel.loadFavorites()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: false)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: false)
+    }
+    
     private func setupUI() {
         title = "Favorites"
         favoritesView.tableView.delegate = self
         favoritesView.tableView.dataSource = self
+        favoritesView.searchBar.delegate = self
     }
     
     private func setupBindings() {
-        viewModel.$favorites
+        viewModel.$filteredFavorites
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.favoritesView.tableView.reloadData()
@@ -62,32 +80,80 @@ final class FavoritesViewController: UIViewController {
     }
 }
 
+extension FavoritesViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        viewModel.filterFavorites(with: searchText)
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder()
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.text = ""
+        searchBar.resignFirstResponder()
+        viewModel.filterFavorites(with: "")
+    }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchBar.showsCancelButton = true
+    }
+    
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        searchBar.showsCancelButton = false
+    }
+}
+
 extension FavoritesViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.favorites.count
+        return viewModel.filteredFavorites.count
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 120
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "FavoriteCell", for: indexPath)
-        let favorite = viewModel.favorites[indexPath.row]
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: FavoriteCardCell.identifier, for: indexPath) as? FavoriteCardCell else {
+            return UITableViewCell()
+        }
         
-        var content = cell.defaultContentConfiguration()
-        content.text = favorite.name
-        content.secondaryText = favorite.type == .service ? "Service" : "Stop"
-        cell.contentConfiguration = content
+        let favorite = viewModel.filteredFavorites[indexPath.row]
+        
+        cell.configure(with: favorite, firstStop: nil, lastStop: nil)
+        
+        if favorite.type == .service {
+            Task {
+                do {
+                    let stopDetails = try await viewModel.getServiceStopDetails(for: favorite.id)
+                    await MainActor.run {
+                        if let currentIndex = tableView.indexPath(for: cell),
+                           currentIndex == indexPath {
+                            cell.configure(
+                                with: favorite,
+                                firstStop: stopDetails?.first,
+                                lastStop: stopDetails?.last
+                            )
+                        }
+                    }
+                } catch {
+                 //
+                }
+            }
+        }
         
         return cell
     }
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            let favorite = viewModel.favorites[indexPath.row]
+            let favorite = viewModel.filteredFavorites[indexPath.row]
             viewModel.removeFavorite(favorite)
         }
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let favorite = viewModel.favorites[indexPath.row]
+        let favorite = viewModel.filteredFavorites[indexPath.row]
         viewModel.navigateToDetail(for: favorite)
         tableView.deselectRow(at: indexPath, animated: true)
     }

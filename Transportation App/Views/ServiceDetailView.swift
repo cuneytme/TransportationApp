@@ -9,6 +9,7 @@ import UIKit
 import MapKit
 
 final class ServiceDetailView: UIView {
+    
     let mapView: MKMapView = {
         let map = MKMapView()
         map.translatesAutoresizingMaskIntoConstraints = false
@@ -19,10 +20,10 @@ final class ServiceDetailView: UIView {
         let control = UISegmentedControl()
         control.selectedSegmentIndex = 0
         control.translatesAutoresizingMaskIntoConstraints = false
-        control.backgroundColor = .systemBackground
-        control.selectedSegmentTintColor = .systemBlue
-        control.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .normal)
-        control.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
+        control.backgroundColor = .white
+        control.selectedSegmentTintColor = .appPrimary
+        control.setTitleTextAttributes([.foregroundColor: UIColor.appPrimary], for: .normal)
+        control.setTitleTextAttributes([.foregroundColor: UIColor.buttonColor], for: .selected)
         return control
     }()
     
@@ -36,6 +37,7 @@ final class ServiceDetailView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
+        
     }
     
     required init?(coder: NSCoder) {
@@ -45,21 +47,29 @@ final class ServiceDetailView: UIView {
     private func setupUI() {
         backgroundColor = .white
         addSubview(mapView)
-        addSubview(directionControl)
         addSubview(activityIndicator)
+        mapView.addSubview(directionControl)
+        
+       
         
         NSLayoutConstraint.activate([
-            directionControl.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 8),
-            directionControl.centerXAnchor.constraint(equalTo: centerXAnchor),
-            directionControl.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.8),
-            
-            mapView.topAnchor.constraint(equalTo: directionControl.bottomAnchor, constant: 8),
+            mapView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
             mapView.leadingAnchor.constraint(equalTo: leadingAnchor),
             mapView.trailingAnchor.constraint(equalTo: trailingAnchor),
             mapView.bottomAnchor.constraint(equalTo: bottomAnchor),
             
+            directionControl.topAnchor.constraint(equalTo: mapView.topAnchor, constant: 16),
+            directionControl.centerXAnchor.constraint(equalTo: centerXAnchor),
+            directionControl.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.8),
+            
             activityIndicator.centerXAnchor.constraint(equalTo: centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
+        
+        directionControl.layer.cornerRadius = 8
+        directionControl.layer.masksToBounds = true
+        directionControl.backgroundColor = .white.withAlphaComponent(0.9)
+        directionControl.layer.borderWidth = 1
+        directionControl.layer.borderColor = UIColor.systemGray4.cgColor
     }
 }

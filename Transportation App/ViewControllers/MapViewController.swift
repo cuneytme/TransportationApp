@@ -158,17 +158,15 @@ extension MapViewController: MKMapViewDelegate {
             var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
             
             if annotationView == nil {
-                annotationView = MKMarkerAnnotationView(annotation: stopAnnotation, reuseIdentifier: identifier)
+                annotationView = MKAnnotationView(annotation: stopAnnotation, reuseIdentifier: identifier)
             } else {
                 annotationView?.annotation = stopAnnotation
             }
             
-            if let markerView = annotationView as? MKMarkerAnnotationView {
-                markerView.markerTintColor = .systemRed
-                markerView.glyphImage = UIImage(systemName: "s.circle.fill")
-                markerView.displayPriority = .required
-                markerView.canShowCallout = true
-            }
+            annotationView?.image = UIImage(named: "stops")
+            annotationView?.canShowCallout = true
+            
+            annotationView?.frame.size = CGSize(width: 30, height: 30)
             
             return annotationView
             

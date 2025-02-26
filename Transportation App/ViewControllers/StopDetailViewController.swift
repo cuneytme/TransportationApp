@@ -31,6 +31,7 @@ final class StopDetailViewController: UIViewController {
         setupUI()
         setupBindings()
         setupNavigationHandlers()
+        setupNavigationBar()
         viewModel.startLiveUpdates()
     }
     
@@ -76,6 +77,22 @@ final class StopDetailViewController: UIViewController {
             self?.navigationController?.pushViewController(serviceDetailVC, animated: true)
         }
     }
+    
+    private func setupNavigationBar() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .systemBlue
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.shadowColor = .clear
+        appearance.shadowImage = UIImage()
+        
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.compactAppearance = appearance
+        
+        navigationController?.navigationBar.tintColor = .white
+    }
 }
 
 extension StopDetailViewController: UITableViewDelegate, UITableViewDataSource {
@@ -91,18 +108,25 @@ extension StopDetailViewController: UITableViewDelegate, UITableViewDataSource {
         return "Route \(viewModel.liveTimes[section].routeName)"
     }
     
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 100
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "BusTimeCell", for: indexPath)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: BusTimeCell.identifier, for: indexPath) as? BusTimeCell else {
+            return UITableViewCell()
+        }
+        
         let route = viewModel.liveTimes[indexPath.section]
         let departure = route.departures[indexPath.row]
         
-        var content = cell.defaultContentConfiguration()
-        content.text = "🚌 \(departure.routeName) - \(departure.destination)"
+        cell.configure(
+            routeName: departure.routeName,
+            destination: departure.destination,
+            time: departure.displayTime,
+            isLive: departure.isLive
+        )
         
-        let status = departure.isLive ? "Live" : "Planned"
-        content.secondaryText = "\(status) - Departure: \(departure.displayTime)"
-        
-        cell.contentConfiguration = content
         return cell
     }
     
@@ -111,5 +135,15 @@ extension StopDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let route = viewModel.liveTimes[indexPath.section]
         let departure = route.departures[indexPath.row]
         viewModel.didSelectService(departure.routeName)
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerView = StopDetailView.RouteHeaderView()
+        headerView.configure(with: viewModel.liveTimes[section].routeName)
+        return headerView
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 40
     }
 } 

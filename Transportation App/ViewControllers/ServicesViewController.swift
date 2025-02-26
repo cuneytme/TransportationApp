@@ -152,7 +152,11 @@ extension ServicesViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.deselectRow(at: indexPath, animated: true)
         let serviceNumber = viewModel.filteredServices[indexPath.row]
         let serviceInfoVC = ServiceInfoViewController(serviceNumber: serviceNumber)
-        navigationController?.pushViewController(serviceInfoVC, animated: true)
+        
+        serviceInfoVC.modalPresentationStyle = .overFullScreen
+        serviceInfoVC.modalTransitionStyle = .crossDissolve
+        serviceInfoVC.view.backgroundColor = UIColor.black.withAlphaComponent(0.5) 
+        present(serviceInfoVC, animated: true)
     }
     
     @objc private func favoriteButtonTapped(_ sender: UIButton) {

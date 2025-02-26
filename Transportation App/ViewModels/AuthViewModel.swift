@@ -14,9 +14,26 @@ final class AuthViewModel {
     var didError: ((String) -> Void)?
     var didLogin: ((User) -> Void)?
     var didFailLogin: ((String) -> Void)?
+    var didRegisterSuccess: ((User) -> Void)?
     
     private let auth = Auth.auth()
     private let db = Firestore.firestore()
+    
+    enum UserTitle: String, CaseIterable {
+        case student = "Student"
+        case personal = "Personal"
+        case teacher = "Teacher"
+        case disabled = "Disabled"
+        case retired = "Retired"
+    }
+    
+    var selectedTitle: String = ""
+    var didUpdateTitle: ((String) -> Void)?
+    
+    func updateTitle(_ title: String) {
+        selectedTitle = title
+        didUpdateTitle?(title)
+    }
     
     func signUp(email: String, password: String, fullName: String, completion: @escaping (Result<User, Error>) -> Void) {
         auth.createUser(withEmail: email, password: password) { [weak self] result, error in
@@ -36,22 +53,25 @@ final class AuthViewModel {
                 "userId": firebaseUser.uid,
                 "email": email,
                 "fullName": fullName,
+                "title": self?.selectedTitle ?? "",
+                "balance": 10.0,
                 "createdAt": FieldValue.serverTimestamp()
             ]
+            
+            print("Debug - Saving Title: \(self?.selectedTitle ?? "")")
             
             self?.db.collection("users").document(firebaseUser.uid)
                 .setData(userData, merge: true) { error in
                     if let error = error {
-                        let user = User(id: firebaseUser.uid,
-                                      email: email,
-                                      fullName: fullName)
-                        completion(.success(user))
+                        completion(.failure(error))
                         return
                     }
                     
                     let user = User(id: firebaseUser.uid,
                                   email: email,
-                                  fullName: fullName)
+                                  fullName: fullName,
+                                  title: self?.selectedTitle ?? "")
+                    self?.didRegisterSuccess?(user)
                     completion(.success(user))
             }
         }
@@ -107,7 +127,8 @@ final class AuthViewModel {
             
             let user = User(id: userId,
                           email: data["email"] as? String ?? "",
-                          fullName: data["fullName"] as? String ?? "")
+                          fullName: data["fullName"] as? String ?? "",
+                          title: data["title"] as? String ?? "")
             completion(.success(user))
         }
     }
@@ -133,6 +154,7 @@ final class AuthViewModel {
             "userId": user.id,
             "email": user.email,
             "fullName": user.fullName,
+            "title": user.title,
             "createdAt": FieldValue.serverTimestamp()
         ]
         
@@ -161,7 +183,9 @@ final class AuthViewModel {
             self?.fetchUserData(userId: userId) { result in
                 switch result {
                 case .success(let user):
-                    self?.didLogin?(user)
+                    DispatchQueue.main.async {
+                        self?.didLogin?(user)
+                    }
                 case .failure(let error):
                     self?.didFailLogin?(error.localizedDescription)
                 }

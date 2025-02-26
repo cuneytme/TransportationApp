@@ -1,8 +1,19 @@
+//
+//  MenuViewModel.swift
+//  Transportation App
+//
+//  Created by Cüneyt Elbastı on 28.01.2025.
+//
+
+
+
+import UIKit
+
 final class MenuViewModel {
     private let user: User
     
     var didSelectProfile: (() -> Void)?
-    var didSelectAbout: (() -> Void)?
+    var didSelectInfo: (() -> Void)?
     var didRequestDismissMenu: (() -> Void)?
     
     init(user: User) {
@@ -13,15 +24,15 @@ final class MenuViewModel {
         didSelectProfile?()
     }
     
-    func handleAboutSelection() {
-        didSelectAbout?()
-    }
-    
-    func getUser() -> User {
-        return user
+    func handleInfoSelection() {
+        didSelectInfo?()
     }
     
     func handleDismissMenu() {
         didRequestDismissMenu?()
+    }
+    
+    func getUser() -> User {
+        return user
     }
 } 

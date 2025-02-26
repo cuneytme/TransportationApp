@@ -1,3 +1,11 @@
+//
+//  UIColor.swift
+//  Transportation App
+//
+//  Created by Cüneyt Elbastı on 23.02.2025.
+//
+
+
 import UIKit
 
 extension UIColor {

@@ -220,6 +220,7 @@ final class ServiceDetailViewModel {
                         self.vehicles = vehicles.filter { vehicle in
                             vehicle.serviceName == self.serviceNumber
                         }
+                        
                         self.updateVehicleAnnotations(self.vehicles)
                     }
                     try await Task.sleep(nanoseconds: 30_000_000_000)
@@ -253,19 +254,25 @@ final class ServiceDetailViewModel {
         let coordinate: CLLocationCoordinate2D
         let title: String
         let subtitle: String
+        let vehicleId: String
         
         init(vehicle: Vehicle) {
             self.coordinate = CLLocationCoordinate2D(latitude: vehicle.latitude, longitude: vehicle.longitude)
             self.title = "Bus \(vehicle.serviceName ?? "Unknown")"
             self.subtitle = vehicle.destination ?? "Unknown Destination"
+            self.vehicleId = vehicle.vehicleId
         }
     }
     
     @Published private(set) var vehicleAnnotations: [VehicleAnnotationViewModel] = []
     
     private func updateVehicleAnnotations(_ vehicles: [Vehicle]) {
+        
+        
         self.vehicleAnnotations = vehicles.map { vehicle in
             VehicleAnnotationViewModel(vehicle: vehicle)
         }
+        
+        
     }
 }

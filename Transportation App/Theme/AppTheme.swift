@@ -1,3 +1,11 @@
+//
+//  AppTheme.swift
+//  Transportation App
+//
+//  Created by Cüneyt Elbastı on 23.02.2025.
+//
+
+
 import UIKit
 
 final class AppTheme {
@@ -36,14 +44,16 @@ final class AppTheme {
         appearance.stackedLayoutAppearance.normal.iconColor = .white
         
         tabBar.standardAppearance = appearance
-        if #available(iOS 15.0, *) {
-            tabBar.scrollEdgeAppearance = appearance
-        }
-        
-        tabBar.layer.cornerRadius = 15
+        tabBar.layer.cornerRadius = 14
         tabBar.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         tabBar.layer.masksToBounds = true
+        tabBar.layer.borderWidth = 1.0
+        tabBar.layer.borderColor = UIColor.black.cgColor
         tabBar.tintColor = .buttonColor
         tabBar.unselectedItemTintColor = .white
+        
+        if #available(iOS 13.0, *) {
+            tabBar.scrollEdgeAppearance = appearance
+        }
     }
 } 

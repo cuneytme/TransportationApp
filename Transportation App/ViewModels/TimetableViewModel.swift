@@ -19,6 +19,9 @@ final class TimetableViewModel {
     @Published private(set) var isLoading = false
     @Published private(set) var error: String?
     @Published private(set) var selectedDayType: DayType = .weekday
+    @Published private(set) var currentTime: String = ""
+    
+    private var timer: Timer?
     
     enum DayType: Int {
         case weekday = 0
@@ -39,6 +42,10 @@ final class TimetableViewModel {
         self.service = service
         self.serviceNumber = serviceNumber
         self.stopId = stopId
+    }
+    
+    deinit {
+        timer?.invalidate()
     }
     
     func fetchTimetables() async {
@@ -70,11 +77,35 @@ final class TimetableViewModel {
         filteredDepartures = departures.filter { departure in
             switch selectedDayType {
             case .weekday, .saturday:
-               
                 return departure.day == 1 || departure.day == 0
             case .sunday:
                 return departure.day == 6
             }
-        }.sorted { $0.time < $1.time } 
+        }.sorted { $0.time < $1.time }
+    }
+    
+    func startTimeUpdates() {
+        updateCurrentTime()
+        timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            self?.updateCurrentTime()
+        }
+    }
+    
+    private func updateCurrentTime() {
+        let formatter = DateFormatter()
+        formatter.timeZone = TimeZone(identifier: "GMT")
+        formatter.dateFormat = "HH:mm"
+        currentTime = formatter.string(from: Date())
+    }
+    
+    func scrollToCurrentTime() -> Int? {
+        let formatter = DateFormatter()
+        formatter.timeZone = TimeZone(identifier: "GMT")
+        formatter.dateFormat = "HH:mm"
+        let currentTime = formatter.string(from: Date())
+        
+        return filteredDepartures.firstIndex { departure in
+            return departure.time >= currentTime
+        }
     }
 } 

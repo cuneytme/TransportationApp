@@ -10,7 +10,7 @@ import FirebaseAuth
 
 final class ProfileViewController: UIViewController {
     private let profileView = ProfileView()
-    private var viewModel: ProfileViewModel
+    private let viewModel: ProfileViewModel
     
     init(user: User) {
         self.viewModel = ProfileViewModel(user: user)
@@ -21,36 +21,32 @@ final class ProfileViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func loadView() {
+        view = profileView
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
         setupBindings()
-        setupNavigationBar()
-        updateUI()
+        title = "Profile"
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.updateUIWithUserData()
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        if let userId = Auth.auth().currentUser?.uid {
-            let authViewModel = AuthViewModel()
-            authViewModel.fetchUserData(userId: userId) { [weak self] result in
-                switch result {
-                case .success(let user):
-                    DispatchQueue.main.async {
-                        self?.viewModel = ProfileViewModel(user: user)
-                        self?.updateUI()
-                    }
-                case .failure(let error):
-                    print("Error refreshing user data: \(error.localizedDescription)")
-                }
-            }
-        }
+        updateUIWithUserData()
     }
     
     private func setupUI() {
-        view.addSubview(profileView)
-        profileView.frame = view.bounds
+        profileView.configure(with: viewModel.userInfo)
+    }
+    
+    private func updateUI(with user: User) {
+        profileView.nameLabel.text = user.fullName
+        profileView.emailLabel.text = user.email
     }
     
     private func setupBindings() {
@@ -58,48 +54,121 @@ final class ProfileViewController: UIViewController {
                                          action: #selector(handleLogout), 
                                          for: .touchUpInside)
         
+        profileView.deleteCardButton.addTarget(self,
+                                             action: #selector(handleDeleteCard),
+                                             for: .touchUpInside)
+        
+        profileView.titleButton.addTarget(self,
+                                        action: #selector(handleTitleSelection),
+                                        for: .touchUpInside)
         
         viewModel.didLogout = { [weak self] in
-            let loginVC = LoginViewController(viewModel: AuthViewModel())
-            loginVC.modalPresentationStyle = .fullScreen
-            UIApplication.shared.windows.first?.rootViewController = loginVC
-            UIApplication.shared.windows.first?.makeKeyAndVisible()
+            DispatchQueue.main.async {
+                let authViewModel = AuthViewModel()
+                let loginVC = LoginViewController(viewModel: authViewModel)
+                let navigationController = UINavigationController(rootViewController: loginVC)
+                navigationController.modalPresentationStyle = .fullScreen
+                
+                if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate,
+                   let window = sceneDelegate.window {
+                    UIView.transition(with: window,
+                                    duration: 0.3,
+                                    options: .transitionCrossDissolve,
+                                    animations: {
+                        window.rootViewController = navigationController
+                    })
+                }
+            }
+        }
+        
+        viewModel.didUpdateUser = { [weak self] updatedUser in
+            DispatchQueue.main.async {
+                self?.profileView.configure(with: updatedUser)
+            }
+        }
+        
+        viewModel.didDeleteCard = { [weak self] in
+            DispatchQueue.main.async {
+                self?.showDeleteSuccessAlert()
+            }
+        }
+        
+        viewModel.didError = { [weak self] errorMessage in
+            DispatchQueue.main.async {
+                self?.showAlert(title: "Error", message: errorMessage)
+            }
+        }
+        
+        viewModel.didUpdateTitle = { [weak self] title in
+            DispatchQueue.main.async {
+                self?.profileView.titleButton.setTitle(title, for: .normal)
+            }
         }
     }
     
-    private func setupNavigationBar() {
-        title = "Profile"
-        
-        if navigationItem.leftBarButtonItem == nil {
-            navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Back",
-                                                            style: .plain,
-                                                            target: self,
-                                                            action: #selector(handleBack))
-        }
-        
-        if navigationItem.rightBarButtonItem == nil {
-            navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Home",
-                                                             style: .plain,
-                                                             target: self,
-                                                             action: #selector(handleHome))
-        }
+    private func updateUIWithUserData() {
+        let userInfo = viewModel.userInfo
+        profileView.configure(with: userInfo)
     }
     
-    private func updateUI() {
-        profileView.nameLabel.text = viewModel.fullName
-        profileView.emailLabel.text = viewModel.email
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title,
+                                    message: message,
+                                    preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
     
     @objc private func handleLogout() {
         viewModel.logout()
     }
     
-    @objc private func handleRegisterCard() {
+    @objc private func handleDeleteCard() {
+        let alert = UIAlertController(
+            title: "Delete Card",
+            message: "Are you sure you want to delete your card?",
+            preferredStyle: .alert
+        )
         
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            self?.viewModel.deleteCard()
+        })
         
-        // NFC READING WILL BE IMPLEMENTED HERE
+        present(alert, animated: true)
+    }
+    
+    private func showDeleteSuccessAlert() {
+        let alert = UIAlertController(
+            title: "Success",
+            message: "Your card has been deleted successfully",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    @objc private func handleTitleSelection() {
+        let alertController = UIAlertController(title: "Select Title",
+                                              message: nil,
+                                              preferredStyle: .actionSheet)
         
-       
+        viewModel.availableTitles.forEach { title in
+            let action = UIAlertAction(title: title, style: .default) { [weak self] _ in
+                self?.viewModel.updateTitle(title)
+            }
+            alertController.addAction(action)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        if let popoverController = alertController.popoverPresentationController {
+            popoverController.sourceView = profileView.titleButton
+            popoverController.sourceRect = profileView.titleButton.bounds
+        }
+        
+        present(alertController, animated: true)
     }
     
     @objc private func handleBack() {
@@ -115,4 +184,4 @@ final class ProfileViewController: UIViewController {
             navigationController.popToRootViewController(animated: true)
         }
     }
-} 
+}

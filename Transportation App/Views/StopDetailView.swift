@@ -11,9 +11,11 @@ import UIKit
 
 final class StopDetailView: UIView {
     let tableView: UITableView = {
-        let table = UITableView()
-        table.register(UITableViewCell.self, forCellReuseIdentifier: "BusTimeCell")
+        let table = UITableView(frame: .zero, style: .grouped)
+        table.register(BusTimeCell.self, forCellReuseIdentifier: BusTimeCell.identifier)
         table.translatesAutoresizingMaskIntoConstraints = false
+        table.backgroundColor = .systemBlue
+        table.separatorStyle = .none
         return table
     }()
     
@@ -23,6 +25,41 @@ final class StopDetailView: UIView {
         indicator.hidesWhenStopped = true
         return indicator
     }()
+    
+    class RouteHeaderView: UIView {
+        private let titleLabel: UILabel = {
+            let label = UILabel()
+            label.textColor = .white
+            label.font = .systemFont(ofSize: 16, weight: .semibold)
+            label.translatesAutoresizingMaskIntoConstraints = false
+            return label
+        }()
+        
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+            setupUI()
+        }
+        
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+        
+        private func setupUI() {
+            backgroundColor = .systemBlue
+            addSubview(titleLabel)
+            
+            NSLayoutConstraint.activate([
+                titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+                titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+                titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 8),
+                titleLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8)
+            ])
+        }
+        
+        func configure(with routeName: String) {
+            titleLabel.text = "Route \(routeName)"
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -34,12 +71,15 @@ final class StopDetailView: UIView {
     }
     
     private func setupUI() {
-        backgroundColor = .white
+        backgroundColor = .systemBlue
+        
         addSubview(tableView)
         addSubview(activityIndicator)
         
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)
+        
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: topAnchor),
+            tableView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: bottomAnchor),

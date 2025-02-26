@@ -33,6 +33,16 @@ final class StopsViewController: UIViewController {
         viewModel.fetchStops()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: false)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: false)
+    }
+    
     private func setupUI() {
         title = "Stops"
         stopsView.tableView.delegate = self
@@ -83,21 +93,24 @@ extension StopsViewController: UITableViewDelegate, UITableViewDataSource {
         return viewModel.filteredStops.count
     }
     
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 120
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "StopCell", for: indexPath)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: StopCardCell.identifier, for: indexPath) as? StopCardCell else {
+            return UITableViewCell()
+        }
+        
         let stop = viewModel.filteredStops[indexPath.row]
         
-        var content = cell.defaultContentConfiguration()
-        content.text = stop.name
-        content.secondaryText = "Location: \(stop.locality) • Services: \(stop.services?.joined(separator: ", ") ?? "")"
-        cell.contentConfiguration = content
+        cell.configure(
+            with: stop.name,
+            isFavorite: viewModel.isFavorite(stopId: stop.stopId)
+        )
         
-        let favoriteButton = UIButton.createFavoriteButton()
-        favoriteButton.tag = indexPath.row
-        favoriteButton.isSelected = viewModel.isFavorite(stopId: stop.stopId)
-        favoriteButton.addTarget(self, action: #selector(favoriteButtonTapped(_:)), for: .touchUpInside)
-        
-        cell.accessoryView = favoriteButton
+        cell.favoriteButton.tag = indexPath.row
+        cell.favoriteButton.addTarget(self, action: #selector(favoriteButtonTapped(_:)), for: .touchUpInside)
         
         return cell
     }
@@ -123,5 +136,19 @@ extension StopsViewController: UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.text = ""
+        searchBar.resignFirstResponder()
+        viewModel.filterStops(with: "")
+    }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchBar.showsCancelButton = true
+    }
+    
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        searchBar.showsCancelButton = false
     }
 } 

@@ -33,6 +33,8 @@ final class TimetableViewController: UIViewController {
         setupTableView()
         setupSegmentedControl()
         
+        viewModel.startTimeUpdates()
+        
         Task {
             await viewModel.fetchTimetables()
         }
@@ -79,6 +81,14 @@ final class TimetableViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.timetableView.tableView.reloadData()
+                self?.scrollToCurrentTime()
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$currentTime
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] time in
+                self?.timetableView.timelineView.updateTime(time)
             }
             .store(in: &cancellables)
     }
@@ -90,6 +100,27 @@ final class TimetableViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
+    
+    private func scrollToCurrentTime() {
+        if let index = viewModel.scrollToCurrentTime() {
+            let indexPath = IndexPath(row: index, section: 0)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                guard let self = self else { return }
+                
+                let timelineBottom = self.timetableView.timelineView.frame.maxY
+                
+                self.timetableView.tableView.contentInset = UIEdgeInsets(
+                    top: timelineBottom,
+                    left: 0,
+                    bottom: 20,
+                    right: 0
+                )
+                
+                self.timetableView.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
+            }
+        }
+    }
 }
 
 extension TimetableViewController: UITableViewDelegate, UITableViewDataSource {
@@ -98,17 +129,17 @@ extension TimetableViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TimetableCell", for: indexPath)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: TimetableCell.identifier, for: indexPath) as? TimetableCell else {
+            return UITableViewCell()
+        }
+        
         let departure = viewModel.filteredDepartures[indexPath.row]
+        cell.configure(with: departure.time, destination: departure.destination)
         
-        var content = cell.defaultContentConfiguration()
-        content.text = "\(departure.time) - \(departure.destination)"
-        
-        cell.contentConfiguration = content
         return cell
     }
     
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return "Service No:"
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 80
     }
 } 

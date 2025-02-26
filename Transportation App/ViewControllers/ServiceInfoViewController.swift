@@ -28,30 +28,17 @@ final class ServiceInfoViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
         setupBindings()
         setupActions()
-    }
-    
-    private func setupUI() {
-        title = "Service Info"
-        navigationController?.navigationBar.prefersLargeTitles = true
+        setupDismissGesture()
     }
     
     private func setupBindings() {
-        viewModel.$serviceInfo
-            .sink { [weak self] info in
-                self?.serviceInfoView.serviceInfoLabel.text = info
-            }
-            .store(in: &cancellables)
-        
         viewModel.$error
             .receive(on: DispatchQueue.main)
             .compactMap { $0 }
             .sink { [weak self] error in
-                let alert = UIAlertController(title: "Error", message: error, preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .default))
-                self?.present(alert, animated: true)
+                self?.showError(error)
             }
             .store(in: &cancellables)
     }
@@ -70,9 +57,24 @@ final class ServiceInfoViewController: UIViewController {
         )
     }
     
+    private func setupDismissGesture() {
+        serviceInfoView.dismissCallback = { [weak self] in
+            self?.viewModel.handleBackgroundTap()
+        }
+        
+        viewModel.dismissTrigger = { [weak self] in
+            self?.dismiss(animated: true)
+        }
+    }
+    
     @objc private func showServiceStopsButtonTapped() {
-        let serviceDetailVC = ServiceDetailViewController(serviceNumber: viewModel.getServiceNumber())
-        navigationController?.pushViewController(serviceDetailVC, animated: true)
+        dismiss(animated: true) { [weak self] in
+            guard let self = self else { return }
+            if let navigationController = UIApplication.shared.keyWindow?.rootViewController as? UINavigationController {
+                let serviceDetailVC = ServiceDetailViewController(serviceNumber: self.viewModel.getServiceNumber())
+                navigationController.pushViewController(serviceDetailVC, animated: true)
+            }
+        }
     }
     
     @objc private func showTimetableButtonTapped() {
@@ -81,8 +83,13 @@ final class ServiceInfoViewController: UIViewController {
             return
         }
         
-        let timetableVC = TimetableViewController(serviceNumber: viewModel.getServiceNumber(), stopId: stopId)
-        navigationController?.pushViewController(timetableVC, animated: true)
+        dismiss(animated: true) { [weak self] in
+            guard let self = self else { return }
+            if let navigationController = UIApplication.shared.keyWindow?.rootViewController as? UINavigationController {
+                let timetableVC = TimetableViewController(serviceNumber: self.viewModel.getServiceNumber(), stopId: stopId)
+                navigationController.pushViewController(timetableVC, animated: true)
+            }
+        }
     }
     
     private func showError(_ message: String) {

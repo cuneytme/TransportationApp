@@ -1,3 +1,12 @@
+//
+//  MenuView.swift
+//  Transportation App
+//
+//  Created by Cüneyt Elbastı on 27.01.2025.
+//
+
+
+
 import UIKit
 
 final class MenuView: UIView {
@@ -10,6 +19,8 @@ final class MenuView: UIView {
         view.layer.shadowOpacity = 0.3
         view.layer.shadowRadius = 5
         view.layer.zPosition = 1000
+        view.layer.cornerRadius = 15
+        view.layer.maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner]
         return view
     }()
     
@@ -23,20 +34,30 @@ final class MenuView: UIView {
     
     let profileButton: UIButton = {
         let button = UIButton(type: .system)
+        let config = UIImage.SymbolConfiguration(pointSize: 20)
+        let image = UIImage(systemName: "person.circle.fill", withConfiguration: config)?.withTintColor(.white, renderingMode: .alwaysOriginal)
+        button.setImage(image, for: .normal)
         button.setTitle("Profile", for: .normal)
         button.setTitleColor(.white, for: .normal)
+        button.tintColor = .white
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 0)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 30, bottom: 0, right: 0)
         button.contentHorizontalAlignment = .left
-        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
-    let aboutButton: UIButton = {
+    let infoButton: UIButton = {
         let button = UIButton(type: .system)
+        let config = UIImage.SymbolConfiguration(pointSize: 20)
+        let image = UIImage(systemName: "info.circle.fill", withConfiguration: config)?.withTintColor(.white, renderingMode: .alwaysOriginal)
+        button.setImage(image, for: .normal)
         button.setTitle("Info", for: .normal)
         button.setTitleColor(.white, for: .normal)
+        button.tintColor = .white
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 0)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 30, bottom: 0, right: 0)
         button.contentHorizontalAlignment = .left
-        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -69,14 +90,12 @@ final class MenuView: UIView {
     
     private func setupUI() {
         backgroundColor = .clear
-        let window = UIApplication.shared.windows.first { $0.isKeyWindow }
-        let topPadding = window?.safeAreaInsets.top ?? 0
-        let bottomPadding = window?.safeAreaInsets.bottom ?? 0
         
         addSubview(dimmedView)
         addSubview(containerView)
         containerView.addSubview(stackView)
-        [profileButton, aboutButton].forEach { stackView.addArrangedSubview($0) }
+        stackView.addArrangedSubview(profileButton)
+        stackView.addArrangedSubview(infoButton)
         
         NSLayoutConstraint.activate([
             dimmedView.topAnchor.constraint(equalTo: topAnchor),
@@ -94,7 +113,7 @@ final class MenuView: UIView {
             stackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             
             profileButton.heightAnchor.constraint(equalToConstant: 44),
-            aboutButton.heightAnchor.constraint(equalToConstant: 44)
+            infoButton.heightAnchor.constraint(equalToConstant: 44)
         ])
         
         containerView.transform = CGAffineTransform(translationX: 250, y: 0)
@@ -109,10 +128,29 @@ final class MenuView: UIView {
     }
     
     private func setupBindings() {
+        guard let viewModel = viewModel else { return }
         profileButton.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
+        infoButton.addTarget(self, action: #selector(infoButtonTapped), for: .touchUpInside)
+    }
+    
+    @objc private func profileButtonTapped() {
+        viewModel?.handleProfileSelection()
+        delegate?.menuViewDidSelectProfile()
+        hide { [weak self] in
+            self?.delegate?.menuViewDidTapDimmedView(self!)
+        }
+    }
+    
+    @objc private func infoButtonTapped() {
+        viewModel?.handleInfoSelection()
+        delegate?.menuViewDidSelectInfo()
+        hide { [weak self] in
+            self?.delegate?.menuViewDidTapDimmedView(self!)
+        }
     }
     
     @objc private func dimmedViewTapped() {
+        viewModel?.handleDismissMenu()
         delegate?.menuViewDidTapDimmedView(self)
     }
     
@@ -128,6 +166,7 @@ final class MenuView: UIView {
         case .ended:
             let velocity = gesture.velocity(in: containerView)
             if translation.x > containerView.frame.width / 2 || velocity.x > 500 {
+                viewModel?.handleDismissMenu()
                 delegate?.menuViewDidSwipeToDismiss(self)
             } else {
                 UIView.animate(withDuration: 0.3) {
@@ -139,10 +178,6 @@ final class MenuView: UIView {
         default:
             break
         }
-    }
-    
-    @objc private func profileButtonTapped() {
-        delegate?.menuViewDidSelectProfile()
     }
     
     func show() {
@@ -166,4 +201,5 @@ protocol MenuViewDelegate: AnyObject {
     func menuViewDidTapDimmedView(_ menuView: MenuView)
     func menuViewDidSwipeToDismiss(_ menuView: MenuView)
     func menuViewDidSelectProfile()
+    func menuViewDidSelectInfo()
 } 

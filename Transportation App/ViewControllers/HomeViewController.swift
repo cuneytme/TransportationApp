@@ -37,7 +37,9 @@ final class HomeViewController: UIViewController {
     }
     
     private func setupBindings() {
-        homeView.registerCardButton.addTarget(self, 
+        
+      
+        homeView.registerCardButton.addTarget(self,
                                             action: #selector(handleRegisterCard), 
                                             for: .touchUpInside)
         
@@ -60,17 +62,44 @@ final class HomeViewController: UIViewController {
         homeView.payWithQRButton.addTarget(self, 
                                          action: #selector(handlePayWithQR), 
                                          for: .touchUpInside)
+        
+        homeView.registeredCardButton.addTarget(self, 
+                                              action: #selector(handleRegisteredCardTapped), 
+                                              for: .touchUpInside)
     }
+    
     
     @objc private func handleRegisterCard() {
         viewModel.registerCard()
     }
     
     @objc private func handleLoadBalance() {
-        viewModel.handleLoadBalanceTapped()
+        let loadBalanceVC = LoadBalanceViewController(user: user)
+        loadBalanceVC.modalPresentationStyle = .pageSheet
+        if let sheet = loadBalanceVC.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
+        present(loadBalanceVC, animated: true)
     }
     
     @objc private func handlePayWithQR() {
-        viewModel.handlePayWithQRTapped()
+        let payWithQRVC = PayWithQRViewController(user: user)
+        payWithQRVC.modalPresentationStyle = .pageSheet
+        if let sheet = payWithQRVC.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
+        present(payWithQRVC, animated: true)
+    }
+    
+    @objc private func handleRegisteredCardTapped() {
+        let cardHistoryVC = CardHistoryViewController(user: user)
+        cardHistoryVC.modalPresentationStyle = .pageSheet
+        if let sheet = cardHistoryVC.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        present(cardHistoryVC, animated: true)
     }
 }
