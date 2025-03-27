@@ -12,7 +12,7 @@ struct Stop: Codable {
     let atcoCode: String
     let name: String
     let identifier: String?
-    let locality: String
+    let locality: String?
     let orientation: Int?
     let direction: String?
     let latitude: Double
@@ -47,7 +47,7 @@ struct StopsResponse: Codable {
         case lastUpdated = "last_updated"
         case stops
     }
-} 
+}
 
 struct ServiceJourneyResponse: Codable {
     let service: ServiceJourney
@@ -81,5 +81,4 @@ enum NetworkError: LocalizedError {
     case networkConnection
     case serverError(String)
     case decodingError(String)
-    
 }

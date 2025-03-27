@@ -41,7 +41,30 @@ final class TransportService {
     }
     
     func fetchStops() async throws -> StopsResponse {
-        return try await fetch("stops")
+        guard let url = URL(string: "\(baseURL)/stops") else {
+            throw NetworkError.invalidURL
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                throw NetworkError.serverError("Server Error: \(httpResponse.statusCode)")
+            }
+            
+            do {
+                let response = try JSONDecoder().decode(StopsResponse.self, from: data)
+                return response
+            } catch {
+                throw NetworkError.decodingError(error.localizedDescription)
+            }
+        } catch {
+            if error is NetworkError {
+                throw error
+            } else {
+                throw NetworkError.networkConnection
+            }
+        }
     }
     
     func fetchVehicles() async throws -> [Vehicle] {

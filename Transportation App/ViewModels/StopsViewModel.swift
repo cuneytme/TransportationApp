@@ -67,7 +67,7 @@ final class StopsViewModel {
             filtered = filtered.filter { stop in
                 let searchableText = [
                     stop.name,
-                    stop.locality,
+                    stop.locality ?? "",
                     stop.services?.joined(separator: " ") ?? ""
                 ].joined(separator: " ").lowercased()
                 
